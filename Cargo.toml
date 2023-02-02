@@ -1,0 +1,2 @@
+[workspace]
+members = ["ddd-rs", "ddd-rs-derive"]

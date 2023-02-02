@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "bungcip.better-toml",
+        "serayuzgur.crates",
+        "usernamehw.errorlens",
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb"
+    ]
+}

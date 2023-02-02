@@ -1,0 +1,18 @@
+[package]
+name = "ddd-rs-derive"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Kim <gabrielkim13@gmail.com>"]
+license = "MIT"
+description = "`ddd-rs`'s proc macros."
+repository = "https://github.com/gabrielkim13/ddd-rs"
+homepage = "https://github.com/gabrielkim13/ddd-rs"
+categories = ["ddd"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+darling = "0.14"
+quote = "1"
+syn = "1"
