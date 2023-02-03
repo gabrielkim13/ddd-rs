@@ -48,12 +48,12 @@ pub fn derive(input: TokenStream) -> TokenStream {
                 self.id
             }
 
-            fn created_at(&self) -> chrono::DateTime<chrono::Utc> {
-                self.created_at
+            fn created_at(&self) -> &chrono::DateTime<chrono::Utc> {
+                &self.created_at
             }
 
-            fn updated_at(&self) -> chrono::DateTime<chrono::Utc> {
-                self.updated_at
+            fn updated_at(&self) -> &chrono::DateTime<chrono::Utc> {
+                &self.updated_at
             }
         }
 

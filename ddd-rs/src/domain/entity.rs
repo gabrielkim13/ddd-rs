@@ -40,14 +40,14 @@
 /// ```
 pub trait Entity: Eq + PartialEq {
     /// Identity type.
-    type Id: PartialEq + Send + Sync;
+    type Id: Clone + Copy + PartialEq + Send + Sync;
 
     /// Identity.
     fn id(&self) -> Self::Id;
 
     /// Creation date (UTC).
-    fn created_at(&self) -> chrono::DateTime<chrono::Utc>;
+    fn created_at(&self) -> &chrono::DateTime<chrono::Utc>;
 
     /// Last update date (UTC).
-    fn updated_at(&self) -> chrono::DateTime<chrono::Utc>;
+    fn updated_at(&self) -> &chrono::DateTime<chrono::Utc>;
 }
