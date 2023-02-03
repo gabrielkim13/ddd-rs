@@ -38,7 +38,7 @@
 /// assert_eq!(a, b);
 /// assert_ne!(a, c);
 /// ```
-pub trait Entity: PartialEq {
+pub trait Entity: Eq + PartialEq {
     /// Identity type.
     type Id: PartialEq + Send + Sync;
 

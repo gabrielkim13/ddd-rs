@@ -3,10 +3,10 @@ use proc_macro::TokenStream;
 use quote::quote;
 
 #[derive(darling::FromDeriveInput, Debug)]
-#[darling(attributes(eq_component), supports(struct_any))]
+#[darling(attributes(eq_component), supports(enum_unit, struct_any))]
 struct ValueObjectInputReceiver {
     ident: syn::Ident,
-    data: darling::ast::Data<(), ValueObjectFieldReceiver>,
+    data: darling::ast::Data<ValueObjectVariantReceiver, ValueObjectFieldReceiver>,
 }
 
 #[derive(darling::FromField, Debug)]
@@ -27,7 +27,14 @@ impl ValueObjectFieldReceiver {
     }
 }
 
+#[derive(darling::FromVariant, Debug)]
+struct ValueObjectVariantReceiver {
+    ident: syn::Ident,
+}
+
 pub fn derive(input: TokenStream) -> TokenStream {
+    use darling::ast::Data;
+
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
     let ValueObjectInputReceiver { ident, data, .. } =
@@ -36,30 +43,83 @@ pub fn derive(input: TokenStream) -> TokenStream {
             Err(e) => return TokenStream::from(e.write_errors()),
         };
 
-    let fields = {
-        let fields = data
-            .take_struct()
-            .expect("Should always be a struct")
-            .fields;
+    match data {
+        Data::Enum(variants) => derive_enum(ident, variants),
+        Data::Struct(fields) => derive_struct(ident, fields),
+    }
+}
 
-        fields
-            .into_iter()
-            .enumerate()
-            .map(|(i, f)| {
-                (
-                    f.is_eq_component(),
-                    f.ident
-                        .as_ref()
-                        .map(|ident| quote!(#ident))
-                        .unwrap_or_else(|| {
-                            let i = syn::Index::from(i);
+fn derive_enum(ident: syn::Ident, variants: Vec<ValueObjectVariantReceiver>) -> TokenStream {
+    let variant_clone = variants.iter().map(|v| {
+        let ident = &v.ident;
 
-                            quote!(#i)
-                        }),
-                )
-            })
-            .collect::<Vec<_>>()
-    };
+        quote!(Self::#ident => Self::#ident)
+    });
+
+    let variant_partial_ord = variants.iter().map(|v| {
+        let ident = &v.ident;
+
+        quote! {
+            (Self::#ident, Self::#ident) => Some(std::cmp::Ordering::Equal),
+            (Self::#ident, _) => Some(std::cmp::Ordering::Greater),
+            (_, Self::#ident) => Some(std::cmp::Ordering::Less)
+        }
+    });
+
+    quote! {
+        impl ValueObject for #ident {}
+
+        impl Clone for #ident {
+            fn clone(&self) -> Self {
+                match self {
+                    #(
+                        #variant_clone,
+                    )*
+                }
+            }
+        }
+
+        impl PartialEq for #ident {
+            fn eq(&self, other: &Self) -> bool {
+                matches!(self.partial_cmp(other), Some(std::cmp::Ordering::Equal))
+            }
+        }
+
+        impl PartialOrd for #ident {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                #[allow(unreachable_patterns)]
+                match (self, other) {
+                    #(
+                        #variant_partial_ord,
+                    )*
+                }
+            }
+        }
+    }
+    .into()
+}
+
+fn derive_struct(
+    ident: syn::Ident,
+    fields: darling::ast::Fields<ValueObjectFieldReceiver>,
+) -> TokenStream {
+    let fields = fields
+        .into_iter()
+        .enumerate()
+        .map(|(i, f)| {
+            (
+                f.is_eq_component(),
+                f.ident
+                    .as_ref()
+                    .map(|ident| quote!(#ident))
+                    .unwrap_or_else(|| {
+                        let i = syn::Index::from(i);
+
+                        quote!(#i)
+                    }),
+            )
+        })
+        .collect::<Vec<_>>();
 
     let field = fields.iter().map(|(_, f)| f);
     let eq_field = fields
