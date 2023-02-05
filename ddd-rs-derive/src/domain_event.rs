@@ -126,6 +126,18 @@ fn derive_struct(
         })
         .collect::<Vec<_>>();
 
+    let impl_default = if extra_fields.is_empty() {
+        Some(quote! {
+            impl #generics Default for #ident #generics {
+                fn default() -> Self {
+                    Self::new()
+                }
+            }
+        })
+    } else {
+        None
+    };
+
     let new_arg = extra_fields.iter().filter_map(|f| {
         f.ident.as_ref().map(|ident| {
             let ty = &f.ty;
@@ -140,6 +152,7 @@ fn derive_struct(
 
     quote! {
         impl #generics #ident #generics {
+            #[doc = "Creates a new instance of the domain event."]
             pub fn new(#(#new_arg, )*) -> Self {
                 Self {
                     id: uuid::Uuid::new_v4(),
@@ -160,6 +173,8 @@ fn derive_struct(
                 &self.at
             }
         }
+
+        #impl_default
     }
     .into()
 }
