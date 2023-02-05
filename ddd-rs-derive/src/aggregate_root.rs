@@ -75,8 +75,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
         impl #generics AggregateRoot for #ident #generics {
             type DomainEvent = #domain_event_ty;
 
-            fn register_domain_event(&mut self, event: Self::DomainEvent) {
-                self.domain_events.push(event)
+            fn register_domain_event(&mut self, event: impl Into<Self::DomainEvent>) {
+                self.domain_events.push(event.into())
             }
 
             fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent> {

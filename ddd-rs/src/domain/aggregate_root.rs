@@ -58,7 +58,7 @@ pub trait AggregateRoot: super::Entity + Send + Sync + 'static {
     type DomainEvent: super::DomainEvent + Send;
 
     /// Registers a new Domain Event to the aggregate.
-    fn register_domain_event(&mut self, event: Self::DomainEvent);
+    fn register_domain_event(&mut self, event: impl Into<Self::DomainEvent>);
 
     /// Takes all current Domain Events, clearing them from the aggregate.
     fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent>;

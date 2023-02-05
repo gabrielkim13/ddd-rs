@@ -21,6 +21,7 @@ struct DomainEventFieldReceiver {
 #[derive(darling::FromVariant, Debug)]
 struct DomainEventVariantReceiver {
     ident: syn::Ident,
+    fields: darling::ast::Fields<DomainEventFieldReceiver>,
 }
 
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -52,15 +53,33 @@ fn derive_enum(
     handler: Option<darling::util::IdentString>,
 ) -> TokenStream {
     let variant_id = variants.iter().map(|v| {
-        let ident = &v.ident;
+        let variant_ident = &v.ident;
 
-        quote!(Self::#ident(v) => v.id())
+        quote!(Self::#variant_ident(v) => v.id())
     });
 
     let variant_at = variants.iter().map(|v| {
-        let ident = &v.ident;
+        let variant_ident = &v.ident;
 
-        quote!(Self::#ident(v) => &v.at())
+        quote!(Self::#variant_ident(v) => &v.at())
+    });
+
+    let from_variant = variants.iter().map(|v| {
+        let variant_ident = &v.ident;
+        let variant_ty = &v
+            .fields
+            .fields
+            .first()
+            .expect("Should always have one field")
+            .ty;
+
+        quote! {
+            impl From<#variant_ty> for #ident {
+                fn from(v: #variant_ty) -> Self {
+                    #ident::#variant_ident(v)
+                }
+            }
+        }
     });
 
     let impl_handler = handler.map(|handler| {
@@ -107,6 +126,10 @@ fn derive_enum(
         }
 
         #impl_handler
+
+        #(
+            #from_variant
+        )*
     }
     .into()
 }

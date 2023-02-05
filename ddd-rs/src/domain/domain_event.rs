@@ -45,9 +45,9 @@
 ///     at: chrono::DateTime<chrono::Utc>,
 /// }
 ///
-/// let a = MyDomainEvent::A(ADomainEvent::new(true));
-/// let b = MyDomainEvent::B(BDomainEvent::new(42));
-/// let c = MyDomainEvent::C(CDomainEvent::new(String::from("foo")));
+/// let a: MyDomainEvent = ADomainEvent::new(true).into();
+/// let b: MyDomainEvent = BDomainEvent::new(42).into();
+/// let c: MyDomainEvent = CDomainEvent::new(String::from("foo")).into();
 /// ```
 pub trait DomainEvent {
     /// Event unique identifier.
