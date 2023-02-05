@@ -6,6 +6,7 @@ use quote::quote;
 #[darling(supports(struct_named))]
 struct EntityInputReceiver {
     ident: syn::Ident,
+    generics: syn::Generics,
     data: darling::ast::Data<(), EntityFieldReceiver>,
 }
 
@@ -18,11 +19,15 @@ struct EntityFieldReceiver {
 pub fn derive(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    let EntityInputReceiver { ident, data, .. } =
-        match EntityInputReceiver::from_derive_input(&derive_input) {
-            Ok(receiver) => receiver,
-            Err(e) => return TokenStream::from(e.write_errors()),
-        };
+    let EntityInputReceiver {
+        ident,
+        generics,
+        data,
+        ..
+    } = match EntityInputReceiver::from_derive_input(&derive_input) {
+        Ok(receiver) => receiver,
+        Err(e) => return TokenStream::from(e.write_errors()),
+    };
 
     let fields = data
         .as_ref()
@@ -41,7 +46,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
     };
 
     quote! {
-        impl Entity for #ident {
+        impl #generics Entity for #ident #generics {
             type Id = #id_ty;
 
             fn id(&self) -> Self::Id {
@@ -57,13 +62,13 @@ pub fn derive(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl PartialEq for #ident {
+        impl #generics PartialEq for #ident #generics {
             fn eq(&self, other: &Self) -> bool {
                 self.id() == other.id()
             }
         }
 
-        impl Eq for #ident {}
+        impl #generics Eq for #ident #generics {}
     }
     .into()
 }

@@ -6,6 +6,7 @@ use quote::quote;
 #[darling(attributes(eq_component), supports(enum_unit, struct_any))]
 struct ValueObjectInputReceiver {
     ident: syn::Ident,
+    generics: syn::Generics,
     data: darling::ast::Data<ValueObjectVariantReceiver, ValueObjectFieldReceiver>,
 }
 
@@ -37,19 +38,27 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    let ValueObjectInputReceiver { ident, data, .. } =
-        match ValueObjectInputReceiver::from_derive_input(&derive_input) {
-            Ok(receiver) => receiver,
-            Err(e) => return TokenStream::from(e.write_errors()),
-        };
+    let ValueObjectInputReceiver {
+        ident,
+        generics,
+        data,
+        ..
+    } = match ValueObjectInputReceiver::from_derive_input(&derive_input) {
+        Ok(receiver) => receiver,
+        Err(e) => return TokenStream::from(e.write_errors()),
+    };
 
     match data {
-        Data::Enum(variants) => derive_enum(ident, variants),
-        Data::Struct(fields) => derive_struct(ident, fields),
+        Data::Enum(variants) => derive_enum(ident, generics, variants),
+        Data::Struct(fields) => derive_struct(ident, generics, fields),
     }
 }
 
-fn derive_enum(ident: syn::Ident, variants: Vec<ValueObjectVariantReceiver>) -> TokenStream {
+fn derive_enum(
+    ident: syn::Ident,
+    generics: syn::Generics,
+    variants: Vec<ValueObjectVariantReceiver>,
+) -> TokenStream {
     let variant_clone = variants.iter().map(|v| {
         let ident = &v.ident;
 
@@ -67,9 +76,9 @@ fn derive_enum(ident: syn::Ident, variants: Vec<ValueObjectVariantReceiver>) -> 
     });
 
     quote! {
-        impl ValueObject for #ident {}
+        impl #generics ValueObject for #ident #generics {}
 
-        impl Clone for #ident {
+        impl #generics Clone for #ident #generics {
             fn clone(&self) -> Self {
                 match self {
                     #(
@@ -79,13 +88,13 @@ fn derive_enum(ident: syn::Ident, variants: Vec<ValueObjectVariantReceiver>) -> 
             }
         }
 
-        impl PartialEq for #ident {
+        impl #generics PartialEq for #ident #generics {
             fn eq(&self, other: &Self) -> bool {
                 matches!(self.partial_cmp(other), Some(std::cmp::Ordering::Equal))
             }
         }
 
-        impl PartialOrd for #ident {
+        impl #generics PartialOrd for #ident #generics {
             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 #[allow(unreachable_patterns)]
                 match (self, other) {
@@ -101,6 +110,7 @@ fn derive_enum(ident: syn::Ident, variants: Vec<ValueObjectVariantReceiver>) -> 
 
 fn derive_struct(
     ident: syn::Ident,
+    generics: syn::Generics,
     fields: darling::ast::Fields<ValueObjectFieldReceiver>,
 ) -> TokenStream {
     let fields = fields
@@ -128,9 +138,9 @@ fn derive_struct(
         .map(|(_, f)| f);
 
     quote! {
-        impl ValueObject for #ident {}
+        impl #generics ValueObject for #ident #generics {}
 
-        impl Clone for #ident {
+        impl #generics Clone for #ident #generics {
             fn clone(&self) -> Self {
                 Self {
                     #(
@@ -140,13 +150,13 @@ fn derive_struct(
             }
         }
 
-        impl PartialEq for #ident {
+        impl #generics PartialEq for #ident #generics {
             fn eq(&self, other: &Self) -> bool {
                 matches!(self.partial_cmp(other), Some(std::cmp::Ordering::Equal))
             }
         }
 
-        impl PartialOrd for #ident {
+        impl #generics PartialOrd for #ident #generics {
             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 #(
                     match self.#eq_field.partial_cmp(&other.#eq_field) {

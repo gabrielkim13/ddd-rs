@@ -6,6 +6,7 @@ use quote::quote;
 #[darling(attributes(domain_event), supports(enum_newtype, struct_named))]
 struct DomainEventInputReceiver {
     ident: syn::Ident,
+    generics: syn::Generics,
     data: darling::ast::Data<DomainEventVariantReceiver, DomainEventFieldReceiver>,
     #[darling(default)]
     handler: Option<darling::util::IdentString>,
@@ -29,6 +30,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let DomainEventInputReceiver {
         ident,
+        generics,
         data,
         handler,
         ..
@@ -38,13 +40,14 @@ pub fn derive(input: TokenStream) -> TokenStream {
     };
 
     match data {
-        Data::Enum(variants) => derive_enum(ident, variants, handler),
-        Data::Struct(fields) => derive_struct(ident, fields),
+        Data::Enum(variants) => derive_enum(ident, generics, variants, handler),
+        Data::Struct(fields) => derive_struct(ident, generics, fields),
     }
 }
 
 fn derive_enum(
     ident: syn::Ident,
+    generics: syn::Generics,
     variants: Vec<DomainEventVariantReceiver>,
     handler: Option<darling::util::IdentString>,
 ) -> TokenStream {
@@ -57,7 +60,7 @@ fn derive_enum(
     let variant_at = variants.iter().map(|v| {
         let ident = &v.ident;
 
-        quote!(Self::#ident(v) => v.at)
+        quote!(Self::#ident(v) => &v.at)
     });
 
     let impl_handler = handler.map(|handler| {
@@ -85,7 +88,7 @@ fn derive_enum(
     });
 
     quote! {
-        impl DomainEvent for #ident {
+        impl #generics DomainEvent for #ident #generics {
             fn id(&self) -> uuid::Uuid {
                 match self {
                     #(
@@ -94,7 +97,7 @@ fn derive_enum(
                 }
             }
 
-            fn at(&self) -> chrono::DateTime<chrono::Utc> {
+            fn at(&self) -> &chrono::DateTime<chrono::Utc> {
                 match self {
                     #(
                         #variant_at,
@@ -110,6 +113,7 @@ fn derive_enum(
 
 fn derive_struct(
     ident: syn::Ident,
+    generics: syn::Generics,
     fields: darling::ast::Fields<DomainEventFieldReceiver>,
 ) -> TokenStream {
     let extra_fields = fields
@@ -135,7 +139,7 @@ fn derive_struct(
         .filter_map(|f| f.ident.as_ref().map(|ident| quote!(#ident)));
 
     quote! {
-        impl #ident {
+        impl #generics #ident #generics {
             pub fn new(#(#new_arg, )*) -> Self {
                 Self {
                     id: uuid::Uuid::new_v4(),
@@ -147,13 +151,13 @@ fn derive_struct(
             }
         }
 
-        impl DomainEvent for #ident {
+        impl #generics DomainEvent for #ident #generics {
             fn id(&self) -> uuid::Uuid {
                 self.id
             }
 
-            fn at(&self) -> chrono::DateTime<chrono::Utc> {
-                self.at
+            fn at(&self) -> &chrono::DateTime<chrono::Utc> {
+                &self.at
             }
         }
     }

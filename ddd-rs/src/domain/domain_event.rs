@@ -54,7 +54,7 @@ pub trait DomainEvent {
     fn id(&self) -> uuid::Uuid;
 
     /// Event date (UTC).
-    fn at(&self) -> chrono::DateTime<chrono::Utc>;
+    fn at(&self) -> &chrono::DateTime<chrono::Utc>;
 }
 
 /// Stub for a unit Domain Event, when the aggregate doesn't really need to emit any.
@@ -66,7 +66,7 @@ impl DomainEvent for UnitDomainEvent {
         Default::default()
     }
 
-    fn at(&self) -> chrono::DateTime<chrono::Utc> {
-        Default::default()
+    fn at(&self) -> &chrono::DateTime<chrono::Utc> {
+        &chrono::DateTime::<chrono::Utc>::MIN_UTC
     }
 }

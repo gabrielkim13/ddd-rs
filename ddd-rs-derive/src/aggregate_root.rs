@@ -6,6 +6,7 @@ use quote::quote;
 #[darling(supports(struct_named))]
 struct AggregateRootInputReceiver {
     ident: syn::Ident,
+    generics: syn::Generics,
     data: darling::ast::Data<(), AggregateRootFieldReceiver>,
 }
 
@@ -22,11 +23,15 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    let AggregateRootInputReceiver { ident, data, .. } =
-        match AggregateRootInputReceiver::from_derive_input(&derive_input) {
-            Ok(receiver) => receiver,
-            Err(e) => return TokenStream::from(e.write_errors()),
-        };
+    let AggregateRootInputReceiver {
+        ident,
+        generics,
+        data,
+        ..
+    } = match AggregateRootInputReceiver::from_derive_input(&derive_input) {
+        Ok(receiver) => receiver,
+        Err(e) => return TokenStream::from(e.write_errors()),
+    };
 
     let fields = data
         .as_ref()
@@ -67,7 +72,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
     };
 
     quote! {
-        impl AggregateRoot for #ident {
+        impl #generics AggregateRoot for #ident #generics {
             type DomainEvent = #domain_event_ty;
 
             fn register_domain_event(&mut self, event: Self::DomainEvent) {
