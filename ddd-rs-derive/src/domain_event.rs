@@ -54,13 +54,13 @@ fn derive_enum(
     let variant_id = variants.iter().map(|v| {
         let ident = &v.ident;
 
-        quote!(Self::#ident(v) => v.id)
+        quote!(Self::#ident(v) => v.id())
     });
 
     let variant_at = variants.iter().map(|v| {
         let ident = &v.ident;
 
-        quote!(Self::#ident(v) => &v.at)
+        quote!(Self::#ident(v) => &v.at())
     });
 
     let impl_handler = handler.map(|handler| {
