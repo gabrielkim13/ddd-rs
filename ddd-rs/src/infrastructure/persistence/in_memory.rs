@@ -9,14 +9,13 @@ use crate::domain::{AggregateRoot, Entity};
 ///
 /// ```
 /// use ddd_rs::application::{ReadRepository, Repository};
-/// use ddd_rs::domain::{AggregateRoot, Entity, UnitDomainEvent};
+/// use ddd_rs::domain::{AggregateRoot, Entity};
 /// use ddd_rs::infrastructure::InMemoryRepository;
 ///
 /// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity, Clone)]
 /// struct MyEntity {
 ///     id: i32,
 ///     my_field: String,
-///     domain_events: Vec<UnitDomainEvent>,
 ///     created_at: chrono::DateTime<chrono::Utc>,
 ///     updated_at: chrono::DateTime<chrono::Utc>,
 /// }
@@ -26,7 +25,6 @@ use crate::domain::{AggregateRoot, Entity};
 ///         Self {
 ///             id,
 ///             my_field: my_field.to_string(),
-///             domain_events: vec![],
 ///             created_at: chrono::Utc::now(),
 ///             updated_at: chrono::Utc::now(),
 ///         }

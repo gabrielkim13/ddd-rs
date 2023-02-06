@@ -100,7 +100,7 @@ fn derive_enum(
                 }
             }
 
-            fn at(&self) -> &chrono::DateTime<chrono::Utc> {
+            fn at(&self) -> chrono::DateTime<chrono::Utc> {
                 match self {
                     #(
                         Self::#variant(v) => v.at(),
@@ -174,8 +174,8 @@ fn derive_struct(
                 self.id
             }
 
-            fn at(&self) -> &chrono::DateTime<chrono::Utc> {
-                &self.at
+            fn at(&self) -> chrono::DateTime<chrono::Utc> {
+                self.at.clone()
             }
         }
 

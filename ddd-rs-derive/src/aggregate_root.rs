@@ -93,50 +93,65 @@ fn derive_struct(
         AngleBracketedGenericArguments, GenericArgument, Path, PathArguments, Type, TypePath,
     };
 
-    let domain_events_field = fields
-        .into_iter()
-        .find(|f| {
+    // Detect the domain event type from a "domain_events: Vec<_>" field.
+    let domain_event_ty = {
+        let domain_events_field = fields.iter().find(|f| {
             f.ident
                 .as_ref()
                 .map(|ident| quote!(#ident).to_string() == "domain_events")
                 .unwrap_or(false)
-        })
-        .expect("Missing `domain_events` field");
+        });
 
-    let generic_argument = match &domain_events_field.ty {
-        Type::Path(TypePath {
-            path: Path { segments, .. },
-            ..
-        }) => match &segments
-            .first()
-            .expect("Invalid empty path segments for `domain_events` field")
-            .arguments
-        {
-            PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) => args
+        let generic_argument = domain_events_field.map(|f| match &f.ty {
+            Type::Path(TypePath {
+                path: Path { segments, .. },
+                ..
+            }) => match &segments
                 .first()
-                .expect("Invalid empty generic for `domain_events` field"),
-            _ => panic!("`domain_events` field must be a Vec<_>"),
+                .expect("Invalid empty path segments for `domain_events` field")
+                .arguments
+            {
+                PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) => args
+                    .first()
+                    .expect("Invalid empty generic for `domain_events` field"),
+                _ => panic!("`domain_events` field must be a Vec<_>"),
+            },
+            _ => panic!("Invalid type variant for `domain_events` field"),
+        });
+
+        generic_argument.map(|a| match a {
+            GenericArgument::Type(ty) => ty,
+            _ => panic!("Invalid type variant for `domain_events` Vec<T> generic argument"),
+        })
+    };
+
+    // If it doesn't exist, use the unit type `()` as the domain event type and derive a dummy
+    // implementation of `AggregateRoot`.
+    match domain_event_ty {
+        Some(ty) => quote! {
+            impl #generics AggregateRoot for #ident #generics {
+                type DomainEvent = #ty;
+
+                fn register_domain_event(&mut self, event: impl Into<Self::DomainEvent>) {
+                    self.domain_events.push(event.into())
+                }
+
+                fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent> {
+                    self.domain_events.drain(..).collect()
+                }
+            }
         },
-        _ => panic!("Invalid type variant for `domain_events` field"),
-    };
+        None => quote! {
+            impl #generics AggregateRoot for #ident #generics {
+                type DomainEvent = ();
 
-    let domain_event_ty = match generic_argument {
-        GenericArgument::Type(ty) => ty,
-        _ => panic!("Invalid type variant for `domain_events` Vec<T> generic argument"),
-    };
+                fn register_domain_event(&mut self, _event: impl Into<Self::DomainEvent>) {}
 
-    quote! {
-        impl #generics AggregateRoot for #ident #generics {
-            type DomainEvent = #domain_event_ty;
-
-            fn register_domain_event(&mut self, event: impl Into<Self::DomainEvent>) {
-                self.domain_events.push(event.into())
+                fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent> {
+                    vec![]
+                }
             }
-
-            fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent> {
-                self.domain_events.drain(..).collect()
-            }
-        }
+        },
     }
     .into()
 }

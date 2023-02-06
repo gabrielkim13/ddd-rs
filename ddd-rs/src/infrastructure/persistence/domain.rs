@@ -15,13 +15,13 @@ use crate::domain::{AggregateRoot, Entity};
 ///     domain_event_handler::{self, DomainEventHandler},
 ///     Repository,
 /// };
-/// use ddd_rs::domain::{AggregateRoot, Entity, UnitDomainEvent};
+/// use ddd_rs::domain::{AggregateRoot, Entity};
 /// use ddd_rs::infrastructure::{DomainRepository, InMemoryRepository};
 ///
 /// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity, Clone)]
 /// struct MyEntity {
 ///     id: i32,
-///     domain_events: Vec<UnitDomainEvent>,
+///     domain_events: Vec<()>,
 ///     created_at: chrono::DateTime<chrono::Utc>,
 ///     updated_at: chrono::DateTime<chrono::Utc>,
 /// }
@@ -48,8 +48,8 @@ use crate::domain::{AggregateRoot, Entity};
 /// }
 ///
 /// #[async_trait::async_trait]
-/// impl DomainEventHandler<UnitDomainEvent> for MockDomainEventHandler {
-///     async fn handle(&self, _event: UnitDomainEvent) -> domain_event_handler::Result<()> {
+/// impl DomainEventHandler<()> for MockDomainEventHandler {
+///     async fn handle(&self, _event: ()) -> domain_event_handler::Result<()> {
 ///         let mut calls = self.calls.write().unwrap();
 ///         *calls += 1;
 ///
@@ -67,9 +67,9 @@ use crate::domain::{AggregateRoot, Entity};
 ///
 /// let mut my_entity = MyEntity::new(1);
 ///
-/// my_entity.register_domain_event(UnitDomainEvent);
-/// my_entity.register_domain_event(UnitDomainEvent);
-/// my_entity.register_domain_event(UnitDomainEvent);
+/// my_entity.register_domain_event(());
+/// my_entity.register_domain_event(());
+/// my_entity.register_domain_event(());
 ///
 /// my_entity_repository.add(my_entity).await.unwrap();
 ///
