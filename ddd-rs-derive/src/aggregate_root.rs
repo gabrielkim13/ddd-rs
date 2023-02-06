@@ -3,11 +3,13 @@ use proc_macro::TokenStream;
 use quote::quote;
 
 #[derive(darling::FromDeriveInput, Debug)]
-#[darling(supports(struct_named))]
+#[darling(attributes(aggregate_root), supports(enum_newtype, struct_named))]
 struct AggregateRootInputReceiver {
     ident: syn::Ident,
     generics: syn::Generics,
-    data: darling::ast::Data<(), AggregateRootFieldReceiver>,
+    data: darling::ast::Data<AggregateRootVariantReceiver, AggregateRootFieldReceiver>,
+    #[darling(default)]
+    domain_event: Option<darling::util::IdentString>,
 }
 
 #[derive(darling::FromField, Debug)]
@@ -16,10 +18,13 @@ struct AggregateRootFieldReceiver {
     ty: syn::Type,
 }
 
+#[derive(darling::FromVariant, Debug)]
+struct AggregateRootVariantReceiver {
+    ident: syn::Ident,
+}
+
 pub fn derive(input: TokenStream) -> TokenStream {
-    use syn::{
-        AngleBracketedGenericArguments, GenericArgument, Path, PathArguments, Type, TypePath,
-    };
+    use darling::ast::Data;
 
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
@@ -27,29 +32,78 @@ pub fn derive(input: TokenStream) -> TokenStream {
         ident,
         generics,
         data,
+        domain_event,
         ..
     } = match AggregateRootInputReceiver::from_derive_input(&derive_input) {
         Ok(receiver) => receiver,
         Err(e) => return TokenStream::from(e.write_errors()),
     };
 
-    let fields = data
-        .as_ref()
-        .take_struct()
-        .expect("Should always be named struct")
-        .fields;
+    match data {
+        Data::Enum(variants) => derive_enum(
+            ident,
+            generics,
+            variants,
+            domain_event.expect("Missing `domain_event` attribute on new-type enum"),
+        ),
+        Data::Struct(fields) => derive_struct(ident, generics, fields),
+    }
+}
 
-    let domain_events_ty = match fields.into_iter().find(|f| {
-        f.ident
-            .as_ref()
-            .map(|ident| quote!(#ident).to_string() == "domain_events")
-            .unwrap_or(false)
-    }) {
-        Some(field) => &field.ty,
-        None => panic!("Missing `domain_events` field"),
+fn derive_enum(
+    ident: syn::Ident,
+    generics: syn::Generics,
+    variants: Vec<AggregateRootVariantReceiver>,
+    domain_event: darling::util::IdentString,
+) -> TokenStream {
+    let domain_event_ident = domain_event.as_ident();
+
+    let variant: Vec<_> = variants.into_iter().map(|v| v.ident).collect();
+
+    quote! {
+        impl #generics AggregateRoot for #ident #generics {
+            type DomainEvent = #domain_event_ident;
+
+            fn register_domain_event(&mut self, event: impl Into<Self::DomainEvent>) {
+                match self {
+                    #(
+                        Self::#variant(v) => v.register_domain_event(event),
+                    )*
+                }
+            }
+
+            fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent> {
+                match self {
+                    #(
+                        Self::#variant(v) => v.drain_domain_events(),
+                    )*
+                }
+            }
+        }
+    }
+    .into()
+}
+
+fn derive_struct(
+    ident: syn::Ident,
+    generics: syn::Generics,
+    fields: darling::ast::Fields<AggregateRootFieldReceiver>,
+) -> TokenStream {
+    use syn::{
+        AngleBracketedGenericArguments, GenericArgument, Path, PathArguments, Type, TypePath,
     };
 
-    let generic_argument = match domain_events_ty {
+    let domain_events_field = fields
+        .into_iter()
+        .find(|f| {
+            f.ident
+                .as_ref()
+                .map(|ident| quote!(#ident).to_string() == "domain_events")
+                .unwrap_or(false)
+        })
+        .expect("Missing `domain_events` field");
+
+    let generic_argument = match &domain_events_field.ty {
         Type::Path(TypePath {
             path: Path { segments, .. },
             ..

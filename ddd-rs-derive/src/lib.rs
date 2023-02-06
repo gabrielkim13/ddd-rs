@@ -12,7 +12,7 @@ mod value_object;
 use proc_macro::TokenStream;
 
 /// Proc macro for deriving the `AggregateRoot` trait.
-#[proc_macro_derive(AggregateRoot)]
+#[proc_macro_derive(AggregateRoot, attributes(aggregate_root))]
 pub fn derive_aggregate_root(input: TokenStream) -> TokenStream {
     aggregate_root::derive(input)
 }
@@ -24,7 +24,7 @@ pub fn derive_domain_event(input: TokenStream) -> TokenStream {
 }
 
 /// Proc macro for deriving the `Entity` trait.
-#[proc_macro_derive(Entity)]
+#[proc_macro_derive(Entity, attributes(entity))]
 pub fn derive_entity(input: TokenStream) -> TokenStream {
     entity::derive(input)
 }

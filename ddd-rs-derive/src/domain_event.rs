@@ -52,16 +52,24 @@ fn derive_enum(
     variants: Vec<DomainEventVariantReceiver>,
     handler: Option<darling::util::IdentString>,
 ) -> TokenStream {
-    let variant_id = variants.iter().map(|v| {
-        let variant_ident = &v.ident;
+    let variant: Vec<_> = variants.iter().map(|v| &v.ident).cloned().collect();
 
-        quote!(Self::#variant_ident(v) => v.id())
-    });
-
-    let variant_at = variants.iter().map(|v| {
-        let variant_ident = &v.ident;
-
-        quote!(Self::#variant_ident(v) => &v.at())
+    let impl_handler = handler.map(|handler| {
+        quote! {
+            #[async_trait::async_trait]
+            impl DomainEventHandler<#ident> for #handler {
+                async fn handle(
+                    &self,
+                    event: #ident,
+                ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+                    match event {
+                        #(
+                            #ident::#variant(v) => self.handle(v).await,
+                        )*
+                    }
+                }
+            }
+        }
     });
 
     let from_variant = variants.iter().map(|v| {
@@ -82,36 +90,12 @@ fn derive_enum(
         }
     });
 
-    let impl_handler = handler.map(|handler| {
-        let variant_arm = variants.iter().map(|v| {
-            let variant_ident = &v.ident;
-
-            quote!(#ident::#variant_ident(v) => self.handle(v).await)
-        });
-
-        quote! {
-            #[async_trait::async_trait]
-            impl DomainEventHandler<#ident> for #handler {
-                async fn handle(
-                    &self,
-                    event: #ident,
-                ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-                    match event {
-                        #(
-                            #variant_arm,
-                        )*
-                    }
-                }
-            }
-        }
-    });
-
     quote! {
         impl #generics DomainEvent for #ident #generics {
             fn id(&self) -> uuid::Uuid {
                 match self {
                     #(
-                        #variant_id,
+                        Self::#variant(v) => v.id(),
                     )*
                 }
             }
@@ -119,7 +103,7 @@ fn derive_enum(
             fn at(&self) -> &chrono::DateTime<chrono::Utc> {
                 match self {
                     #(
-                        #variant_at,
+                        Self::#variant(v) => v.at(),
                     )*
                 }
             }
@@ -139,7 +123,7 @@ fn derive_struct(
     generics: syn::Generics,
     fields: darling::ast::Fields<DomainEventFieldReceiver>,
 ) -> TokenStream {
-    let extra_fields = fields
+    let extra_fields: Vec<_> = fields
         .into_iter()
         .filter(|f| {
             f.ident
@@ -147,7 +131,17 @@ fn derive_struct(
                 .map(|ident| !matches!(quote!(#ident).to_string().as_str(), "id" | "at"))
                 .unwrap_or(false)
         })
-        .collect::<Vec<_>>();
+        .collect();
+
+    let new_arg = extra_fields.iter().filter_map(|f| {
+        f.ident.as_ref().map(|ident| {
+            let ty = &f.ty;
+
+            quote!(#ident: #ty)
+        })
+    });
+
+    let init_field = extra_fields.iter().filter_map(|f| f.ident.as_ref());
 
     let impl_default = if extra_fields.is_empty() {
         Some(quote! {
@@ -160,18 +154,6 @@ fn derive_struct(
     } else {
         None
     };
-
-    let new_arg = extra_fields.iter().filter_map(|f| {
-        f.ident.as_ref().map(|ident| {
-            let ty = &f.ty;
-
-            quote!(#ident: #ty)
-        })
-    });
-
-    let init_field = extra_fields
-        .iter()
-        .filter_map(|f| f.ident.as_ref().map(|ident| quote!(#ident)));
 
     quote! {
         impl #generics #ident #generics {

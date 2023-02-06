@@ -59,21 +59,7 @@ fn derive_enum(
     generics: syn::Generics,
     variants: Vec<ValueObjectVariantReceiver>,
 ) -> TokenStream {
-    let variant_clone = variants.iter().map(|v| {
-        let ident = &v.ident;
-
-        quote!(Self::#ident => Self::#ident)
-    });
-
-    let variant_partial_ord = variants.iter().map(|v| {
-        let ident = &v.ident;
-
-        quote! {
-            (Self::#ident, Self::#ident) => Some(std::cmp::Ordering::Equal),
-            (Self::#ident, _) => Some(std::cmp::Ordering::Greater),
-            (_, Self::#ident) => Some(std::cmp::Ordering::Less)
-        }
-    });
+    let variant: Vec<_> = variants.into_iter().map(|v| v.ident).collect();
 
     quote! {
         impl #generics ValueObject for #ident #generics {}
@@ -82,7 +68,7 @@ fn derive_enum(
             fn clone(&self) -> Self {
                 match self {
                     #(
-                        #variant_clone,
+                        Self::#variant => Self::#variant,
                     )*
                 }
             }
@@ -99,7 +85,9 @@ fn derive_enum(
                 #[allow(unreachable_patterns)]
                 match (self, other) {
                     #(
-                        #variant_partial_ord,
+                        (Self::#variant, Self::#variant) => Some(std::cmp::Ordering::Equal),
+                        (Self::#variant, _) => Some(std::cmp::Ordering::Greater),
+                        (_, Self::#variant) => Some(std::cmp::Ordering::Less),
                     )*
                 }
             }
