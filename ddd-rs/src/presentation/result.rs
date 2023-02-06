@@ -42,10 +42,10 @@ pub struct ValidationError {
 
 impl ValidationError {
     /// Creates a new [ValidationError].
-    pub fn new(identifier: impl ToString, error_message: impl ToString) -> Self {
+    pub fn new(identifier: impl Into<String>, error_message: impl Into<String>) -> Self {
         Self {
-            identifier: identifier.to_string(),
-            error_message: error_message.to_string(),
+            identifier: identifier.into(),
+            error_message: error_message.into(),
         }
     }
 }

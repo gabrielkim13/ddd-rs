@@ -30,9 +30,9 @@
 /// }
 /// ```
 #[cfg(feature = "serde")]
-pub trait Request: serde::Deserialize<'static> {
+pub trait Request: serde::Deserialize<'static> + Send + Sync {
     /// Request response type.
-    type Response: serde::Serialize;
+    type Response: serde::Serialize + Send + Sync;
 }
 
 #[cfg(not(feature = "serde"))]

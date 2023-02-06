@@ -6,6 +6,6 @@ pub use repository::{ReadRepository, Repository};
 pub mod request_handler;
 pub use request_handler::RequestHandler;
 
-/// Domain Event Handler
-pub mod domain_event_handler;
-pub use domain_event_handler::DomainEventHandler;
+/// Notification Handler
+pub mod notification_handler;
+pub use notification_handler::NotificationHandler;

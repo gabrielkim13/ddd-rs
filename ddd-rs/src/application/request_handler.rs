@@ -46,7 +46,7 @@ use crate::presentation::{self, Request};
 /// # })
 /// ```
 #[async_trait::async_trait]
-pub trait RequestHandler<T: Request> {
+pub trait RequestHandler<T: Request>: Send + Sync {
     /// Handles the incoming [Request], returning its Response as a [Result](presentation::Result).
     async fn handle(&self, request: T) -> presentation::Result<<T as Request>::Response>;
 }

@@ -13,19 +13,12 @@
 /// Derive its implementation using the [ddd_rs::AggregateRoot](crate::AggregateRoot) macro:
 ///
 /// ```
-/// use ddd_rs::domain::{AggregateRoot, DomainEvent, Entity};
-///
-/// #[derive(ddd_rs::DomainEvent)]
-/// struct MyDomainEvent {
-///     id: uuid::Uuid,
-///     at: chrono::DateTime<chrono::Utc>,
-/// }
+/// use ddd_rs::domain::{AggregateRoot, Entity};
 ///
 /// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity)]
 /// struct MyEntity {
 ///     id: i32,
 ///     my_field: String,
-///     domain_events: Vec<MyDomainEvent>,
 ///     created_at: chrono::DateTime<chrono::Utc>,
 ///     updated_at: chrono::DateTime<chrono::Utc>,
 /// }
@@ -35,31 +28,10 @@
 ///         Self {
 ///             id,
 ///             my_field: my_field.to_string(),
-///             domain_events: vec![],
 ///             created_at: chrono::Utc::now(),
 ///             updated_at: chrono::Utc::now(),
 ///         }
 ///     }
 /// }
-///
-/// let mut my_entity = MyEntity::new(1, "foo");
-///
-/// my_entity.register_domain_event(MyDomainEvent::new());
-/// my_entity.register_domain_event(MyDomainEvent::new());
-/// my_entity.register_domain_event(MyDomainEvent::new());
-///
-/// let domain_events = my_entity.drain_domain_events();
-///
-/// assert_eq!(domain_events.len(), 3);
-/// assert!(my_entity.domain_events.is_empty());
 /// ```
-pub trait AggregateRoot: super::Entity + Send + Sync + 'static {
-    /// Domain Event type.
-    type DomainEvent: super::DomainEvent + Send;
-
-    /// Registers a new Domain Event to the aggregate.
-    fn register_domain_event(&mut self, event: impl Into<Self::DomainEvent>);
-
-    /// Takes all current Domain Events, clearing them from the aggregate.
-    fn drain_domain_events(&mut self) -> Vec<Self::DomainEvent>;
-}
+pub trait AggregateRoot: super::Entity + Send + Sync + 'static {}

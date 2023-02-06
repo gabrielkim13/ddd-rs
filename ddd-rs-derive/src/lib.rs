@@ -5,28 +5,28 @@
 #![warn(missing_docs)]
 
 mod aggregate_root;
-mod domain_event;
 mod entity;
+mod notification;
 mod value_object;
 
 use proc_macro::TokenStream;
 
 /// Proc macro for deriving the `AggregateRoot` trait.
-#[proc_macro_derive(AggregateRoot, attributes(aggregate_root))]
+#[proc_macro_derive(AggregateRoot)]
 pub fn derive_aggregate_root(input: TokenStream) -> TokenStream {
     aggregate_root::derive(input)
-}
-
-/// Proc macro for deriving the `DomainEvent` trait.
-#[proc_macro_derive(DomainEvent, attributes(domain_event))]
-pub fn derive_domain_event(input: TokenStream) -> TokenStream {
-    domain_event::derive(input)
 }
 
 /// Proc macro for deriving the `Entity` trait.
 #[proc_macro_derive(Entity, attributes(entity))]
 pub fn derive_entity(input: TokenStream) -> TokenStream {
     entity::derive(input)
+}
+
+/// Proc macro for deriving the `Notification` trait.
+#[proc_macro_derive(Notification, attributes(notification))]
+pub fn derive_notification(input: TokenStream) -> TokenStream {
+    notification::derive(input)
 }
 
 /// Proc macro for deriving the `ValueObject` trait.

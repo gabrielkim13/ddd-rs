@@ -7,41 +7,39 @@
 //!
 //! ## Application Layer
 //!
-//! - [DomainEventHandler](application::DomainEventHandler)
+//! - [NotificationHandler](application::NotificationHandler)
 //! - [Repository](application::Repository)
 //! - [RequestHandler](application::RequestHandler)
 //!
 //! ## Domain Layer
 //!
 //! - [AggregateRoot](domain::AggregateRoot)
-//! - [DomainEvent](domain::DomainEvent)
 //! - [Entity](domain::Entity)
 //! - [ValueObject](domain::ValueObject)
 //!
 //! ## Infrastructure Layer
 //!
 //! - Persistence
-//!   - [DomainRepository](infrastructure::DomainRepository)
 //!   - [InMemoryRepository](infrastructure::InMemoryRepository)
 //!
 //! ## Presentation Layer
 //!
+//! - [Notification](presentation::Notification)
 //! - [Request](presentation::Request)
 //! - [Result](presentation::Result)
 
 #![warn(missing_docs)]
 
-/// **Application Layer**: Repository, Request (Command / Query) / Domain Event handlers, Providers'
-/// interfaces
+/// **Application Layer**: Repository, Request / Notification handlers, Providers' interfaces
 pub mod application;
 
-/// **Domain Layer**: AggregateRoot, Entity, Value Object, Domain Event
+/// **Domain Layer**: Aggregate Root, Entity, Value Object
 pub mod domain;
 
 /// **Infrastructure Layer**: Persistence, Providers' implementations
 pub mod infrastructure;
 
-/// **Presentation (Interface) Layer**: Request (Command / Query), DTOs
+/// **Presentation (Interface) Layer**: Request (Command / Query), Notification, DTOs
 pub mod presentation;
 
 #[cfg(feature = "derive")]
