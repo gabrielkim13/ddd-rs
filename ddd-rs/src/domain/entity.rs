@@ -10,8 +10,6 @@
 /// Derive its implementation using the [ddd_rs::Entity](crate::Entity) macro:
 ///
 /// ```
-/// use ddd_rs::domain::Entity;
-///
 /// #[derive(ddd_rs::Entity, Debug)]
 /// struct MyEntity {
 ///     id: i32,

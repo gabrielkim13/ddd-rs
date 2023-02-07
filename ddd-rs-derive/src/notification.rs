@@ -73,7 +73,7 @@ fn derive_enum(
 
         quote! {
             #[async_trait::async_trait]
-            impl NotificationHandler<#ident> for #notification_handler_ident {
+            impl ddd_rs::application::NotificationHandler<#ident> for #notification_handler_ident {
                 async fn handle(
                     &self,
                     notification: #ident,
@@ -89,7 +89,7 @@ fn derive_enum(
     });
 
     quote! {
-        impl Notification for #ident {}
+        impl ddd_rs::presentation::Notification for #ident {}
 
         #(
             #impl_from
@@ -101,5 +101,5 @@ fn derive_enum(
 }
 
 fn derive_struct(ident: syn::Ident) -> TokenStream {
-    quote! (impl Notification for #ident {}).into()
+    quote! (impl ddd_rs::presentation::Notification for #ident {}).into()
 }

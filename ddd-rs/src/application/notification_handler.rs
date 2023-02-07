@@ -15,7 +15,6 @@ pub type Result<T, E = Box<dyn std::error::Error + Send + Sync>> = core::result:
 ///
 /// ```
 /// use ddd_rs::application::notification_handler::{self, NotificationHandler};
-/// use ddd_rs::presentation::Notification;
 ///
 /// #[derive(ddd_rs::Notification, Debug)]
 /// #[notification(handler = "MyNotificationHandler")]

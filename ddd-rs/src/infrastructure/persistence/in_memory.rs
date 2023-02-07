@@ -9,7 +9,6 @@ use crate::domain::{AggregateRoot, Entity};
 ///
 /// ```
 /// use ddd_rs::application::{ReadRepository, Repository};
-/// use ddd_rs::domain::{AggregateRoot, Entity};
 /// use ddd_rs::infrastructure::InMemoryRepository;
 ///
 /// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity, Clone)]

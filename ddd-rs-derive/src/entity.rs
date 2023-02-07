@@ -61,7 +61,7 @@ fn derive_enum(
     let variant: Vec<_> = variants.into_iter().map(|v| v.ident).collect();
 
     quote! {
-        impl #generics Entity for #ident #generics {
+        impl #generics ddd_rs::domain::Entity for #ident #generics {
             type Id = #id_ident;
 
             fn id(&self) -> Self::Id {
@@ -109,7 +109,7 @@ fn derive_struct(
         .ty;
 
     quote! {
-        impl #generics Entity for #ident #generics {
+        impl #generics ddd_rs::domain::Entity for #ident #generics {
             type Id = #id_ty;
 
             fn id(&self) -> Self::Id {
@@ -127,6 +127,8 @@ fn derive_struct(
 
         impl #generics PartialEq for #ident #generics {
             fn eq(&self, other: &Self) -> bool {
+                use ddd_rs::domain::Entity;
+
                 self.id() == other.id()
             }
         }

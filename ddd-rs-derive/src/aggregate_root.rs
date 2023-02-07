@@ -18,5 +18,5 @@ pub fn derive(input: TokenStream) -> TokenStream {
         Err(e) => return TokenStream::from(e.write_errors()),
     };
 
-    quote!(impl #generics AggregateRoot for #ident #generics {}).into()
+    quote!(impl #generics ddd_rs::domain::AggregateRoot for #ident #generics {}).into()
 }

@@ -62,7 +62,7 @@ fn derive_enum(
     let variant: Vec<_> = variants.into_iter().map(|v| v.ident).collect();
 
     quote! {
-        impl #generics ValueObject for #ident #generics {}
+        impl #generics ddd_rs::domain::ValueObject for #ident #generics {}
 
         impl #generics Clone for #ident #generics {
             fn clone(&self) -> Self {
@@ -126,7 +126,7 @@ fn derive_struct(
         .map(|(_, f)| f);
 
     quote! {
-        impl #generics ValueObject for #ident #generics {}
+        impl #generics ddd_rs::domain::ValueObject for #ident #generics {}
 
         impl #generics Clone for #ident #generics {
             fn clone(&self) -> Self {

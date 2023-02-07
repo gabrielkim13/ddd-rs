@@ -8,8 +8,6 @@
 /// Derive its implementation using the [ddd_rs::Notification](crate::Notification) macro:
 ///
 /// ```
-/// use ddd_rs::presentation::{Notification};
-///
 /// #[derive(ddd_rs::Notification, Debug)]
 /// enum MyNotification {
 ///     A(ANotification),

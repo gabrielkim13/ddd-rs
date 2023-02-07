@@ -9,8 +9,6 @@
 /// Derive its implementation using the [ddd_rs::ValueObject](crate::ValueObject) macro:
 ///
 /// ```
-/// use ddd_rs::domain::ValueObject;
-///
 /// #[derive(ddd_rs::ValueObject, Debug)]
 /// struct MyNamedValueObject {
 ///     #[eq_component]

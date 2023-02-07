@@ -13,8 +13,6 @@
 /// Derive its implementation using the [ddd_rs::AggregateRoot](crate::AggregateRoot) macro:
 ///
 /// ```
-/// use ddd_rs::domain::{AggregateRoot, Entity};
-///
 /// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity)]
 /// struct MyEntity {
 ///     id: i32,
