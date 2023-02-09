@@ -10,7 +10,6 @@ use crate::presentation::{self, Request};
 /// use ddd_rs::application::RequestHandler;
 /// use ddd_rs::presentation::{self, Request};
 ///
-/// #[derive(serde::Deserialize)]
 /// struct ListFibonacciQuery {
 ///     n: u32,
 /// }

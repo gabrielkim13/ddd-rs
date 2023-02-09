@@ -39,4 +39,4 @@
 ///     bar: vec![1, 2, 3],
 /// }.into();
 /// ```
-pub trait Notification: Send + Sync {}
+pub trait Notification: Send {}

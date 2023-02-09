@@ -12,14 +12,12 @@
 /// ```
 /// use ddd_rs::presentation::Request;
 ///
-/// #[derive(serde::Deserialize)]
 /// struct MyRequest {
 ///     a: bool,
 ///     b: i32,
 ///     c: String,
 /// }
 ///
-/// #[derive(serde::Serialize)]
 /// struct MyResponse {
 ///     foo: String,
 ///     bar: i32,
@@ -29,13 +27,13 @@
 ///     type Response = MyResponse;
 /// }
 /// ```
-#[cfg(feature = "serde")]
-pub trait Request: serde::Deserialize<'static> + Send + Sync {
+#[cfg(not(feature = "serde"))]
+pub trait Request: Send {
     /// Request response type.
-    type Response: serde::Serialize + Send + Sync;
+    type Response: Send;
 }
 
-#[cfg(not(feature = "serde"))]
-pub trait Request {
-    type Response;
+#[cfg(feature = "serde")]
+pub trait Request: serde::Deserialize<'static> + Send {
+    type Response: serde::Serialize + Send;
 }
