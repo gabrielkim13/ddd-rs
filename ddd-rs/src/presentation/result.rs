@@ -42,10 +42,16 @@ pub struct ValidationError {
 
 impl ValidationError {
     /// Creates a new [ValidationError].
-    pub fn new(identifier: impl Into<String>, error_message: impl Into<String>) -> Self {
+    pub fn new(identifier: impl Into<String>, error_message: impl ToString) -> Self {
         Self {
             identifier: identifier.into(),
-            error_message: error_message.into(),
+            error_message: error_message.to_string(),
         }
+    }
+}
+
+impl From<Box<dyn std::error::Error + Send + Sync>> for Error {
+    fn from(err: Box<dyn std::error::Error + Send + Sync>) -> Self {
+        Self::Internal(err)
     }
 }
