@@ -1,6 +1,6 @@
 [package]
 name = "ddd-rs-derive"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 authors = ["Gabriel Kim <gabrielkim13@gmail.com>"]
 license = "MIT"
@@ -20,5 +20,5 @@ syn = "1"
 [dev-dependencies]
 async-trait = "0.1"
 chrono = "0.4"
-ddd-rs = { version = "0.2", path = "../ddd-rs" }
+ddd-rs = { version = "0.3", path = "../ddd-rs" }
 uuid = { version = "1", features = ["v4"] }

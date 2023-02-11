@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::application::{repository, ReadRepository, Repository};
+use crate::application::{ReadRepository, Repository};
 use crate::domain::{AggregateRoot, Entity};
 
 /// An in-memory implementation of [Repository], using a [HashMap].
@@ -67,7 +67,7 @@ impl<T: AggregateRoot + Clone> ReadRepository<T> for InMemoryRepository<T>
 where
     <T as Entity>::Id: std::hash::Hash + Eq,
 {
-    async fn get_by_id(&self, id: <T as Entity>::Id) -> repository::Result<Option<T>> {
+    async fn get_by_id(&self, id: <T as Entity>::Id) -> crate::Result<Option<T>> {
         let ro_entities = self.entities.read().unwrap();
 
         let entity = ro_entities.get(&id).cloned();
@@ -75,7 +75,7 @@ where
         Ok(entity)
     }
 
-    async fn list(&self, skip: usize, take: usize) -> repository::Result<Vec<T>> {
+    async fn list(&self, skip: usize, take: usize) -> crate::Result<Vec<T>> {
         let ro_entities = self.entities.read().unwrap();
 
         let entities = ro_entities
@@ -88,7 +88,7 @@ where
         Ok(entities)
     }
 
-    async fn count(&self) -> repository::Result<usize> {
+    async fn count(&self) -> crate::Result<usize> {
         let ro_entities = self.entities.read().unwrap();
 
         Ok(ro_entities.len())
@@ -100,7 +100,7 @@ impl<T: AggregateRoot + Clone> Repository<T> for InMemoryRepository<T>
 where
     <T as Entity>::Id: std::hash::Hash + Eq,
 {
-    async fn add(&self, entity: T) -> repository::Result<T> {
+    async fn add(&self, entity: T) -> crate::Result<T> {
         let mut wo_entities = self.entities.write().unwrap();
 
         wo_entities.insert(entity.id(), entity.clone());
@@ -108,11 +108,11 @@ where
         Ok(entity)
     }
 
-    async fn update(&self, entity: T) -> repository::Result<T> {
+    async fn update(&self, entity: T) -> crate::Result<T> {
         self.add(entity).await
     }
 
-    async fn delete(&self, entity: T) -> repository::Result<()> {
+    async fn delete(&self, entity: T) -> crate::Result<()> {
         let mut wo_entities = self.entities.write().unwrap();
 
         wo_entities.remove(&entity.id());

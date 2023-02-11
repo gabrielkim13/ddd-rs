@@ -77,7 +77,7 @@ fn derive_enum(
                 async fn handle(
                     &self,
                     notification: #ident,
-                ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+                ) -> Result<(), ddd_rs::BoxError> {
                     match notification {
                         #(
                             #ident::#variant(v) => self.handle(v).await,

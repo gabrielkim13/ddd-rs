@@ -1,8 +1,5 @@
 use crate::presentation::Notification;
 
-/// Result type for [NotificationHandler] operations.
-pub type Result<T, E = Box<dyn std::error::Error + Send + Sync>> = core::result::Result<T, E>;
-
 /// Trait for representing a **Notification Handler**.
 ///
 /// See [Notification] for more information about Notifications.
@@ -43,7 +40,7 @@ pub type Result<T, E = Box<dyn std::error::Error + Send + Sync>> = core::result:
 ///
 /// #[async_trait::async_trait]
 /// impl NotificationHandler<ANotification> for MyNotificationHandler {
-///     async fn handle(&self, notification: ANotification) -> notification_handler::Result<()> {
+///     async fn handle(&self, notification: ANotification) -> ddd_rs::Result<()> {
 ///         match notification.a_field {
 ///             true => Ok(()),
 ///             _ => Err("a_field is not true".into()),
@@ -53,7 +50,7 @@ pub type Result<T, E = Box<dyn std::error::Error + Send + Sync>> = core::result:
 ///
 /// #[async_trait::async_trait]
 /// impl NotificationHandler<BNotification> for MyNotificationHandler {
-///     async fn handle(&self, notification: BNotification) -> notification_handler::Result<()> {
+///     async fn handle(&self, notification: BNotification) -> ddd_rs::Result<()> {
 ///         match notification.b_field {
 ///             1 => Ok(()),
 ///             _ => Err("b_field is not 1".into()),
@@ -63,7 +60,7 @@ pub type Result<T, E = Box<dyn std::error::Error + Send + Sync>> = core::result:
 ///
 /// #[async_trait::async_trait]
 /// impl NotificationHandler<CNotification> for MyNotificationHandler {
-///     async fn handle(&self, notification: CNotification) -> notification_handler::Result<()> {
+///     async fn handle(&self, notification: CNotification) -> ddd_rs::Result<()> {
 ///         match notification.c_field.as_str() {
 ///             "1" => Ok(()),
 ///             _ => Err("c_field is not \"1\"".into()),
@@ -84,5 +81,5 @@ pub type Result<T, E = Box<dyn std::error::Error + Send + Sync>> = core::result:
 #[async_trait::async_trait]
 pub trait NotificationHandler<T: Notification>: Send + Sync {
     /// Handles the incoming [Notification] returning a unitary [Result].
-    async fn handle(&self, notification: T) -> Result<()>;
+    async fn handle(&self, notification: T) -> crate::Result<()>;
 }

@@ -42,6 +42,9 @@ pub mod infrastructure;
 /// **Presentation (Interface) Layer**: Request (Command / Query), Notification, DTOs
 pub mod presentation;
 
+mod error;
+pub use error::*;
+
 #[cfg(feature = "derive")]
 #[allow(unused_imports)]
 #[macro_use]

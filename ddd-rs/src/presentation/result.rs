@@ -1,3 +1,5 @@
+use crate::BoxError;
+
 /// Result type for command / query operations.
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
@@ -27,7 +29,7 @@ pub enum Error {
     /// Different in nature from the other error variants, which are more "guard-like"; this should
     /// be returned when the operation was actually attempted.
     #[error("Internal: {0}")]
-    Internal(#[source] Box<dyn std::error::Error + Send + Sync>),
+    Internal(#[source] BoxError),
 }
 
 /// Validation error
@@ -50,8 +52,8 @@ impl ValidationError {
     }
 }
 
-impl From<Box<dyn std::error::Error + Send + Sync>> for Error {
-    fn from(err: Box<dyn std::error::Error + Send + Sync>) -> Self {
+impl From<BoxError> for Error {
+    fn from(err: BoxError) -> Self {
         Self::Internal(err)
     }
 }
