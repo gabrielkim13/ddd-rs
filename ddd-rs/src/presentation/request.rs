@@ -33,7 +33,9 @@ pub trait Request: Send {
     type Response: Send;
 }
 
+/// Trait for representing a **Request**.
 #[cfg(feature = "serde")]
 pub trait Request: serde::Deserialize<'static> + Send {
+    /// Request response type.
     type Response: serde::Serialize + Send;
 }

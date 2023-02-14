@@ -57,3 +57,41 @@ impl From<BoxError> for Error {
         Self::Internal(err)
     }
 }
+
+#[cfg(feature = "axum")]
+impl axum_core::response::IntoResponse for Error {
+    fn into_response(self) -> axum_core::response::Response {
+        use std::collections::HashMap;
+
+        use axum::Json;
+        use http::status::StatusCode;
+
+        match self {
+            Error::Invalid(validation_errors) => {
+                let value = serde_json::json!({
+                    "status_code": 400,
+                    "message": "One or more errors occurred!",
+                    "errors": validation_errors
+                        .into_iter()
+                        .map(|ValidationError { identifier, error_message, .. }| (identifier, error_message))
+                        .collect::<HashMap<_, _>>(),
+                });
+
+                (StatusCode::BAD_REQUEST, Json(value)).into_response()
+            }
+            Error::Unauthorized => StatusCode::UNAUTHORIZED.into_response(),
+            Error::Forbidden => StatusCode::FORBIDDEN.into_response(),
+            Error::NotFound => StatusCode::NOT_FOUND.into_response(),
+            Error::Internal(e) => {
+                let value = serde_json::json!({
+                    "status": "Internal Server Error!",
+                    "code": 500,
+                    "reason": e.to_string(),
+                    "note": "See application log for stack trace.",
+                });
+
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(value)).into_response()
+            }
+        }
+    }
+}
