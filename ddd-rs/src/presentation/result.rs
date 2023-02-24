@@ -32,6 +32,43 @@ pub enum Error {
     Internal(#[source] BoxError),
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+
+        let mut state = serializer.serialize_struct("Error", 2)?;
+
+        match self {
+            Error::Invalid(validation_errors) => {
+                state.serialize_field("message", "Bad request")?;
+                state.serialize_field("errors", validation_errors)?;
+            }
+            Error::Unauthorized => {
+                state.serialize_field("message", "Unauthorized")?;
+                state.serialize_field::<[()]>("errors", &[])?;
+            }
+            Error::Forbidden => {
+                state.serialize_field("message", "Forbidden")?;
+                state.serialize_field::<[()]>("errors", &[])?;
+            }
+            Error::NotFound => {
+                state.serialize_field("message", "Not found")?;
+                state.serialize_field::<[()]>("errors", &[])?;
+            }
+            Error::Internal(e) => {
+                state.serialize_field("message", "Internal server error")?;
+                state.serialize_field("errors", &[e.to_string()])?;
+            }
+        }
+
+        state.end()
+    }
+}
+
 /// Validation error
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -61,37 +98,15 @@ impl From<BoxError> for Error {
 #[cfg(feature = "axum")]
 impl axum_core::response::IntoResponse for Error {
     fn into_response(self) -> axum_core::response::Response {
-        use std::collections::HashMap;
-
         use axum::Json;
         use http::status::StatusCode;
 
-        match self {
-            Error::Invalid(validation_errors) => {
-                let value = serde_json::json!({
-                    "status_code": 400,
-                    "message": "One or more errors occurred!",
-                    "errors": validation_errors
-                        .into_iter()
-                        .map(|ValidationError { identifier, error_message, .. }| (identifier, error_message))
-                        .collect::<HashMap<_, _>>(),
-                });
-
-                (StatusCode::BAD_REQUEST, Json(value)).into_response()
-            }
+        match &self {
+            Error::Invalid(_) => (StatusCode::BAD_REQUEST, Json(self)).into_response(),
             Error::Unauthorized => StatusCode::UNAUTHORIZED.into_response(),
             Error::Forbidden => StatusCode::FORBIDDEN.into_response(),
             Error::NotFound => StatusCode::NOT_FOUND.into_response(),
-            Error::Internal(e) => {
-                let value = serde_json::json!({
-                    "status": "Internal Server Error!",
-                    "code": 500,
-                    "reason": e.to_string(),
-                    "note": "See application log for stack trace.",
-                });
-
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(value)).into_response()
-            }
+            Error::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(self)).into_response(),
         }
     }
 }
