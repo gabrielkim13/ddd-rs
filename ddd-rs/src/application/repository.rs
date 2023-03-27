@@ -14,7 +14,7 @@ use crate::domain::{AggregateRoot, Entity};
 /// See [InMemoryRepository](crate::infrastructure::persistence::InMemoryRepository) for a sample
 /// implementation of this trait.
 #[async_trait::async_trait]
-pub trait Repository<T: AggregateRoot>: ReadRepository<T> {
+pub trait Repository<T: AggregateRoot>: ReadRepository<T> + Send + Sync {
     /// Adds an entity to the repository.
     async fn add(&self, entity: T) -> crate::Result<T>;
 

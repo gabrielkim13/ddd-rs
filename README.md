@@ -6,7 +6,7 @@ Domain-Driven Design (DDD) building blocks, for Rust applications.
 
 ```toml
 [dependencies]
-ddd-rs = "0.1
+ddd-rs = "0.3"
 ```
 
 ### More
