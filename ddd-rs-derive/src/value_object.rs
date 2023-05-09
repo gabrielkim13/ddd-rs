@@ -96,7 +96,7 @@ fn derive_enum_unit(
                 #[allow(clippy::clone_on_copy)]
                 match self {
                     #(
-                        Self::#variant(v) => Self::#variant(v.clone()),
+                        Self::#variant => Self::#variant,
                     )*
                 }
             }
@@ -138,7 +138,7 @@ fn derive_enum_newtype(
             fn clone(&self) -> Self {
                 match self {
                     #(
-                        Self::#variant => Self::#variant,
+                        Self::#variant(v) => Self::#variant(v.clone()),
                     )*
                 }
             }
