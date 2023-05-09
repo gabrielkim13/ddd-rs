@@ -3,7 +3,10 @@ use proc_macro::TokenStream;
 use quote::quote;
 
 #[derive(darling::FromDeriveInput, Debug)]
-#[darling(attributes(eq_component), supports(enum_unit, struct_any))]
+#[darling(
+    attributes(eq_component),
+    supports(enum_unit, enum_newtype, struct_any)
+)]
 struct ValueObjectInputReceiver {
     ident: syn::Ident,
     generics: syn::Generics,
@@ -20,7 +23,7 @@ struct ValueObjectFieldReceiver {
 impl ValueObjectFieldReceiver {
     pub fn is_eq_component(&self) -> bool {
         self.attrs.iter().any(|f| {
-            f.path
+            f.path()
                 .get_ident()
                 .map(|ident| ident == "eq_component")
                 .unwrap_or(false)
@@ -28,9 +31,19 @@ impl ValueObjectFieldReceiver {
     }
 }
 
+#[derive(darling::FromField, Debug)]
+struct ValueObjectVariantNewTypeReceiver;
+
 #[derive(darling::FromVariant, Debug)]
 struct ValueObjectVariantReceiver {
     ident: syn::Ident,
+    fields: darling::ast::Fields<ValueObjectVariantNewTypeReceiver>,
+}
+
+impl ValueObjectVariantReceiver {
+    pub fn is_unit(&self) -> bool {
+        self.fields.is_empty()
+    }
 }
 
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -55,6 +68,20 @@ pub fn derive(input: TokenStream) -> TokenStream {
 }
 
 fn derive_enum(
+    ident: syn::Ident,
+    generics: syn::Generics,
+    variants: Vec<ValueObjectVariantReceiver>,
+) -> TokenStream {
+    let is_enum_unit = variants.iter().all(|v| v.is_unit());
+
+    if is_enum_unit {
+        derive_enum_unit(ident, generics, variants)
+    } else {
+        derive_enum_newtype(ident, generics, variants)
+    }
+}
+
+fn derive_enum_unit(
     ident: syn::Ident,
     generics: syn::Generics,
     variants: Vec<ValueObjectVariantReceiver>,
@@ -89,6 +116,46 @@ fn derive_enum(
                         (Self::#variant, _) => Some(std::cmp::Ordering::Greater),
                         (_, Self::#variant) => Some(std::cmp::Ordering::Less),
                     )*
+                }
+            }
+        }
+    }
+    .into()
+}
+
+fn derive_enum_newtype(
+    ident: syn::Ident,
+    generics: syn::Generics,
+    variants: Vec<ValueObjectVariantReceiver>,
+) -> TokenStream {
+    let variant: Vec<_> = variants.into_iter().map(|v| v.ident).collect();
+
+    quote! {
+        impl #generics ddd_rs::domain::ValueObject for #ident #generics {}
+
+        impl #generics Clone for #ident #generics {
+            fn clone(&self) -> Self {
+                match self {
+                    #(
+                        Self::#variant => Self::#variant,
+                    )*
+                }
+            }
+        }
+
+        impl #generics PartialEq for #ident #generics {
+            fn eq(&self, other: &Self) -> bool {
+                matches!(self.partial_cmp(other), Some(std::cmp::Ordering::Equal))
+            }
+        }
+
+        impl #generics PartialOrd for #ident #generics {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                match (self, other) {
+                    #(
+                        (Self::#variant(l), Self::#variant(r)) => l.partial_cmp(r),
+                    )*
+                    _ => None,
                 }
             }
         }
