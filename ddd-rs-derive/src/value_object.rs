@@ -93,9 +93,10 @@ fn derive_enum_unit(
 
         impl #generics Clone for #ident #generics {
             fn clone(&self) -> Self {
+                #[allow(clippy::clone_on_copy)]
                 match self {
                     #(
-                        Self::#variant => Self::#variant,
+                        Self::#variant(v) => Self::#variant(v.clone()),
                     )*
                 }
             }
