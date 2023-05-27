@@ -2,126 +2,60 @@ use darling::FromDeriveInput;
 use proc_macro::TokenStream;
 use quote::quote;
 
-#[derive(darling::FromDeriveInput, Debug)]
-#[darling(attributes(entity), supports(enum_newtype, struct_named))]
-struct EntityInputReceiver {
+#[derive(darling::FromDeriveInput)]
+#[darling(attributes(entity), supports(struct_named))]
+struct Entity {
     ident: syn::Ident,
     generics: syn::Generics,
-    data: darling::ast::Data<EntityVariantReceiver, EntityFieldReceiver>,
-    #[darling(default)]
-    id: Option<darling::util::IdentString>,
+    data: darling::ast::Data<darling::util::Ignored, EntityField>,
 }
 
-#[derive(darling::FromField, Debug)]
-struct EntityFieldReceiver {
+#[derive(darling::FromField)]
+#[darling(attributes(entity))]
+struct EntityField {
     ident: Option<syn::Ident>,
     ty: syn::Type,
-}
-
-#[derive(darling::FromVariant, Debug)]
-struct EntityVariantReceiver {
-    ident: syn::Ident,
+    #[darling(default)]
+    id: bool,
 }
 
 pub fn derive(input: TokenStream) -> TokenStream {
-    use darling::ast::Data;
-
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    let EntityInputReceiver {
+    let Entity {
         ident,
         generics,
         data,
-        id,
         ..
-    } = match EntityInputReceiver::from_derive_input(&derive_input) {
-        Ok(receiver) => receiver,
+    } = match Entity::from_derive_input(&derive_input) {
+        Ok(entity) => entity,
         Err(e) => return TokenStream::from(e.write_errors()),
     };
 
-    match data {
-        Data::Enum(variants) => derive_enum(
-            ident,
-            generics,
-            variants,
-            id.expect("Missing `id` attribute on new-type enum"),
-        ),
-        Data::Struct(fields) => derive_struct(ident, generics, fields),
-    }
-}
+    let fields = data.take_struct().unwrap();
 
-fn derive_enum(
-    ident: syn::Ident,
-    generics: syn::Generics,
-    variants: Vec<EntityVariantReceiver>,
-    id: darling::util::IdentString,
-) -> TokenStream {
-    let id_ident = id.as_ident();
-
-    let variant: Vec<_> = variants.into_iter().map(|v| v.ident).collect();
-
-    quote! {
-        impl #generics ddd_rs::domain::Entity for #ident #generics {
-            type Id = #id_ident;
-
-            fn id(&self) -> Self::Id {
-                match self {
-                    #(
-                        Self::#variant(v) => v.id(),
-                    )*
-                }
-            }
-
-            fn created_at(&self) -> &chrono::DateTime<chrono::Utc> {
-                match self {
-                    #(
-                        Self::#variant(v) => v.created_at(),
-                    )*
-                }
-            }
-
-            fn updated_at(&self) -> &chrono::DateTime<chrono::Utc> {
-                match self {
-                    #(
-                        Self::#variant(v) => v.updated_at(),
-                    )*
-                }
-            }
-        }
-    }
-    .into()
+    derive_struct(ident, generics, fields)
 }
 
 fn derive_struct(
     ident: syn::Ident,
     generics: syn::Generics,
-    fields: darling::ast::Fields<EntityFieldReceiver>,
+    fields: darling::ast::Fields<EntityField>,
 ) -> TokenStream {
-    let id_ty = fields
+    let id_field = fields
         .into_iter()
-        .find(|f| {
-            f.ident
-                .as_ref()
-                .map(|ident| quote!(#ident).to_string() == "id")
-                .unwrap_or(false)
-        })
-        .expect("Missing `id` field")
-        .ty;
+        .find(|f| f.id)
+        .expect("Missing `id` field");
+
+    let id_ident = id_field.ident.unwrap();
+    let id_ty = id_field.ty;
 
     quote! {
         impl #generics ddd_rs::domain::Entity for #ident #generics {
             type Id = #id_ty;
 
-            fn id(&self) -> Self::Id {
-                self.id
-            }
-
-            fn created_at(&self) -> &chrono::DateTime<chrono::Utc> {
-                &self.created_at
-            }
-
-            fn updated_at(&self) -> &chrono::DateTime<chrono::Utc> {
-                &self.updated_at
+            fn id(&self) -> &Self::Id {
+                &self.#id_ident
             }
         }
 

@@ -1,5 +1,3 @@
-use futures::future;
-
 use crate::domain::{AggregateRoot, Entity};
 
 /// Trait for representing a **Repository**.
@@ -9,9 +7,9 @@ use crate::domain::{AggregateRoot, Entity};
 /// > the needed references to other objects of the domain. They will just get them from the
 /// > Repository and the model is regaining its clarity and focus.
 ///
-/// # Examples
+/// # Example
 ///
-/// See [InMemoryRepository](crate::infrastructure::persistence::InMemoryRepository) for a sample
+/// See [InMemoryRepository](crate::infrastructure::memory::InMemoryRepository) for a sample
 /// implementation of this trait.
 #[async_trait::async_trait]
 pub trait Repository<T: AggregateRoot>: ReadRepository<T> {
@@ -26,17 +24,33 @@ pub trait Repository<T: AggregateRoot>: ReadRepository<T> {
 
     /// Adds the given entities to the repository.
     async fn add_range(&self, entities: Vec<T>) -> crate::Result<Vec<T>> {
-        future::try_join_all(entities.into_iter().map(|e| self.add(e))).await
+        let mut added_entities = Vec::new();
+
+        for entity in entities {
+            self.add(entity).await.map(|e| added_entities.push(e))?;
+        }
+
+        Ok(added_entities)
     }
 
     /// Updates the given entities on the repository.
     async fn update_range(&self, entities: Vec<T>) -> crate::Result<Vec<T>> {
-        future::try_join_all(entities.into_iter().map(|e| self.update(e))).await
+        let mut updated_entities = Vec::new();
+
+        for entity in entities {
+            self.update(entity)
+                .await
+                .map(|e| updated_entities.push(e))?;
+        }
+
+        Ok(updated_entities)
     }
 
     /// Deletes the given entities from the repository.
     async fn delete_range(&self, entities: Vec<T>) -> crate::Result<()> {
-        future::try_join_all(entities.into_iter().map(|e| self.delete(e))).await?;
+        for entity in entities {
+            self.delete(entity).await?;
+        }
 
         Ok(())
     }
@@ -54,8 +68,13 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
     /// Returns the total number of entities in the repository.
     async fn count(&self) -> crate::Result<usize>;
 
-    /// Returns a boolean whether the repository is not empty.
-    async fn any(&self) -> crate::Result<bool> {
-        Ok(self.count().await? > 0)
+    /// Checks whether an entity with the given ID exists in the repository.
+    async fn exists(&self, id: <T as Entity>::Id) -> crate::Result<bool> {
+        self.get_by_id(id).await.map(|e| e.is_some())
+    }
+
+    /// Checks if the repository is empty.
+    async fn is_empty(&self) -> crate::Result<bool> {
+        self.count().await.map(|c| c == 0)
     }
 }

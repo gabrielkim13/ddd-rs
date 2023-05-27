@@ -10,21 +10,21 @@
 /// Derive its implementation using the [ddd_rs::Entity](crate::Entity) macro:
 ///
 /// ```
+/// use ddd_rs::domain::Entity;
+///
+/// // Annotate the identity field with the `#[entity(id)]` attribute.
 /// #[derive(ddd_rs::Entity, Debug)]
 /// struct MyEntity {
-///     id: i32,
+///     #[entity(id)]
+///     code: u32,
 ///     my_field: String,
-///     created_at: chrono::DateTime<chrono::Utc>,
-///     updated_at: chrono::DateTime<chrono::Utc>,
 /// }
 ///
 /// impl MyEntity {
-///     pub fn new(id: i32, my_field: impl ToString) -> Self {
+///     pub fn new(code: u32, my_field: impl ToString) -> Self {
 ///         Self {
-///             id,
+///             code,
 ///             my_field: my_field.to_string(),
-///             created_at: chrono::Utc::now(),
-///             updated_at: chrono::Utc::now(),
 ///         }
 ///     }
 /// }
@@ -33,19 +33,17 @@
 /// let b = MyEntity::new(1, "bar");
 /// let c = MyEntity::new(2, "foo");
 ///
+/// // By definition, `Entity` equality is based exclusively on their identity.
 /// assert_eq!(a, b);
+/// assert_eq!(a.id(), b.id());
+///
 /// assert_ne!(a, c);
+/// assert_ne!(a.id(), c.id());
 /// ```
 pub trait Entity: Eq + PartialEq {
     /// Identity type.
-    type Id: Clone + Copy + PartialEq + Send + Sync;
+    type Id: Clone + PartialEq + Send + Sync;
 
     /// Identity.
-    fn id(&self) -> Self::Id;
-
-    /// Creation date (UTC).
-    fn created_at(&self) -> &chrono::DateTime<chrono::Utc>;
-
-    /// Last update date (UTC).
-    fn updated_at(&self) -> &chrono::DateTime<chrono::Utc>;
+    fn id(&self) -> &Self::Id;
 }

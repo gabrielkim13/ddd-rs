@@ -9,51 +9,29 @@
 /// Derive its implementation using the [ddd_rs::ValueObject](crate::ValueObject) macro:
 ///
 /// ```
+/// // Annotate the equality components with the `#[value_object(eq)]` attribute.
 /// #[derive(ddd_rs::ValueObject, Debug)]
-/// struct MyNamedValueObject {
-///     #[eq_component]
+/// struct MyValueObject {
+///     #[value_object(eq)]
 ///     x: bool,
 ///     y: Option<i32>,
-///     #[eq_component]
+///     #[value_object(eq)]
 ///     z: String,
 /// }
 ///
-/// let a = MyNamedValueObject { x: true, y: Some(42), z: String::from("foo") };
-/// let b = MyNamedValueObject { x: true, y: Some(-1), z: String::from("foo") };
-/// let c = MyNamedValueObject { x: false, y: Some(42), z: String::from("bar") };
+/// let a = MyValueObject { x: true, y: Some(42), z: String::from("foo") };
+/// let b = MyValueObject { x: true, y: Some(-1), z: String::from("foo") };
+/// let c = MyValueObject { x: false, y: Some(42), z: String::from("bar") };
 ///
+/// // `ValueObject`s are equal if all their equality components are equal.
 /// assert_eq!(a, b);
 /// assert_ne!(a, c);
 ///
-/// // Comparison by equality components, in order of declaration
-/// assert!(a > c); // Because "foo" > "bar"
+/// // They are also cloneable, by definition.
+/// let a_clone = a.clone();
+///
+/// assert_eq!(a.x, a_clone.x);
+/// assert_eq!(a.y, a_clone.y);
+/// assert_eq!(a.z, a_clone.z);
 /// ```
-///
-/// It also works on **tuple** structs, which is useful when implementing the
-/// [New Type idiom](https://doc.rust-lang.org/rust-by-example/generics/new_types.html):
-///
-/// ```
-/// use ddd_rs::domain::ValueObject;
-///
-/// #[derive(ddd_rs::ValueObject, Debug)]
-/// struct MyTupleValueObject(#[eq_component] bool, Option<i32>, #[eq_component] String);
-///
-/// let a = MyTupleValueObject(true, Some(42), String::from("foo"));
-/// let b = MyTupleValueObject(true, Some(-1), String::from("foo"));
-/// let c = MyTupleValueObject(false, Some(42), String::from("bar"));
-///
-/// assert_eq!(a, b);
-/// assert_ne!(a, c);
-///
-/// assert!(a > c);
-/// ```
-///
-/// And, although kind of useless, on **unit** structs:
-///
-/// ```
-/// use ddd_rs::domain::ValueObject;
-///
-/// #[derive(ddd_rs::ValueObject, Debug)]
-/// struct MyUnitValueObject;
-/// ```
-pub trait ValueObject: Clone + PartialEq + PartialOrd {}
+pub trait ValueObject: Clone + PartialEq {}

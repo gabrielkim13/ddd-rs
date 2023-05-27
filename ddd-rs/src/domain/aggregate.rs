@@ -8,28 +8,35 @@
 /// > references only to the root object. If there are other Entities inside the boundary, the
 /// > identity of those entities is local, making sense only inside the aggregate.
 ///
-/// # Examples
+/// # Example
 ///
 /// Derive its implementation using the [ddd_rs::AggregateRoot](crate::AggregateRoot) macro:
 ///
 /// ```
+/// // The `AggregateRoot` usually holds references to other entities, acting as a means to access
+/// // and even modify them.
+/// //
+/// // Note that we also need to derive the `Entity` trait, since an `AggregateRoot` is an `Entity`.
 /// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity)]
-/// struct MyEntity {
-///     id: i32,
-///     my_field: String,
-///     created_at: chrono::DateTime<chrono::Utc>,
-///     updated_at: chrono::DateTime<chrono::Utc>,
+/// struct MyAggregateRoot {
+///     #[entity(id)]
+///     id: u32,
+///     foo: Foo,
+///     bars: Vec<Bar>,
 /// }
 ///
-/// impl MyEntity {
-///     pub fn new(id: i32, my_field: impl ToString) -> Self {
-///         Self {
-///             id,
-///             my_field: my_field.to_string(),
-///             created_at: chrono::Utc::now(),
-///             updated_at: chrono::Utc::now(),
-///         }
-///     }
+/// #[derive(ddd_rs::Entity)]
+/// struct Foo {
+///     #[entity(id)]
+///     id: u32,
+///     foo: String,
+/// }
+///
+/// #[derive(ddd_rs::Entity)]
+/// struct Bar {
+///     #[entity(id)]
+///     id: String,
+///     bar: u32,
 /// }
 /// ```
 pub trait AggregateRoot: super::Entity + Send + Sync + 'static {}

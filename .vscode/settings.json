@@ -2,5 +2,6 @@
     "editor.formatOnSave": true,
     "editor.rulers": [
         100
-    ]
+    ],
+    "rust-analyzer.check.command": "clippy",
 }

@@ -5,50 +5,38 @@
 //! > Most of the definitions on these docs are taken from Eric Evan's
 //! > [Domain-Driven Design: Tackling Complexity in the Heart of Software](https://www.oreilly.com/library/view/domain-driven-design-tackling/0321125215/).
 //!
-//! ## Application Layer
+//! ## Application layer
 //!
-//! - [NotificationHandler](application::NotificationHandler)
 //! - [Repository](application::Repository)
-//! - [RequestHandler](application::RequestHandler)
+//! - Service:
+//!   - [Command](application::Command) / [Query](application::Query)
+//!   - [Request](application::Request)
+//!   - [RequestHandler](application::RequestHandler)
 //!
-//! ## Domain Layer
+//! ## Domain layer
 //!
 //! - [AggregateRoot](domain::AggregateRoot)
 //! - [Entity](domain::Entity)
 //! - [ValueObject](domain::ValueObject)
 //!
-//! ## Infrastructure Layer
+//! ## Infrastructure layer
 //!
-//! - Persistence
+//! - In-memory:
 //!   - [InMemoryRepository](infrastructure::InMemoryRepository)
-//!
-//! ## Presentation Layer
-//!
-//! - [Notification](presentation::Notification)
-//! - [Request](presentation::Request)
-//! - [Result](presentation::Result)
 
 #![warn(missing_docs)]
 
-/// **Application Layer**: Repository, Request / Notification handlers, Providers' interfaces
+/// Application layer
 pub mod application;
 
-/// **Domain Layer**: Aggregate Root, Entity, Value Object
+/// Domain layer
 pub mod domain;
 
-/// **Infrastructure Layer**: Persistence, Providers' implementations
+/// Infrastructure layer
 pub mod infrastructure;
-
-/// **Presentation (Interface) Layer**: Request (Command / Query), Notification, DTOs
-pub mod presentation;
 
 mod error;
 pub use error::*;
-
-#[cfg(feature = "derive")]
-#[allow(unused_imports)]
-#[macro_use]
-extern crate ddd_rs_derive;
 
 #[cfg(feature = "derive")]
 pub use ddd_rs_derive::*;

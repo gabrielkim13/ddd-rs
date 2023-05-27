@@ -6,7 +6,6 @@
 
 mod aggregate_root;
 mod entity;
-mod notification;
 mod value_object;
 
 use proc_macro::TokenStream;
@@ -18,22 +17,18 @@ pub fn derive_aggregate_root(input: TokenStream) -> TokenStream {
 }
 
 /// Proc macro for deriving the `Entity` trait.
+///
+/// Use the `#[entity(id)]` attribute to tag the identity (ID) field of the entity.
 #[proc_macro_derive(Entity, attributes(entity))]
 pub fn derive_entity(input: TokenStream) -> TokenStream {
     entity::derive(input)
 }
 
-/// Proc macro for deriving the `Notification` trait.
-#[proc_macro_derive(Notification, attributes(notification))]
-pub fn derive_notification(input: TokenStream) -> TokenStream {
-    notification::derive(input)
-}
-
 /// Proc macro for deriving the `ValueObject` trait.
 ///
-/// Use the `#[eq_component]` attribute to tag which fields should be considered when comparing
-/// value objects.
-#[proc_macro_derive(ValueObject, attributes(eq_component))]
+/// Use the `#[value_object(eq)]` attribute to tag which fields should be considered as equality
+/// components when comparing value objects.
+#[proc_macro_derive(ValueObject, attributes(value_object))]
 pub fn derive_value_object(input: TokenStream) -> TokenStream {
     value_object::derive(input)
 }

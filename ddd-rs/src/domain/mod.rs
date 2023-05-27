@@ -1,5 +1,5 @@
-mod aggregate_root;
-pub use aggregate_root::*;
+mod aggregate;
+pub use aggregate::*;
 
 mod entity;
 pub use entity::*;
