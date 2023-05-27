@@ -1,3 +1,5 @@
+use crate::domain::AggregateRootEx;
+
 /// Trait for representing a **Request**.
 ///
 /// Requests are usually [Commands](Command) or [Queries](Query), and their sole requirement is to
@@ -152,3 +154,13 @@ pub use RequestHandler as CommandHandler;
 
 /// Alias for a [RequestHandler] specific to [Queries](Query).
 pub use RequestHandler as QueryHandler;
+
+/// Trait for representing a **Domain Event Handler**.
+///
+/// See [AggregateRootEx] for more information about **Domain Events** and the example for
+/// [RepositoryEx](super::RepositoryEx) about this trait's usage.
+#[async_trait::async_trait]
+pub trait DomainEventHandler<T: AggregateRootEx>: Send + Sync {
+    /// Handles the incoming domain event, applying any necessary changes to the entity.
+    async fn handle(&self, entity: &mut T, event: T::DomainEvent) -> crate::Result<()>;
+}

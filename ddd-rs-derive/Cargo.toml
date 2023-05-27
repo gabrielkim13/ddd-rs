@@ -16,9 +16,3 @@ proc-macro = true
 darling = "0.20"
 quote = "1"
 syn = "2"
-
-[dev-dependencies]
-async-trait = "0.1"
-chrono = "0.4"
-ddd-rs = { path = "../ddd-rs" }
-uuid = { version = "1", features = ["v4"] }

@@ -5,61 +5,7 @@ use crate::domain::{AggregateRoot, Entity};
 
 /// An in-memory implementation of [Repository], using a [HashMap].
 ///
-/// # Examples
-///
-/// ```
-/// use ddd_rs::application::{ReadRepository, Repository};
-/// use ddd_rs::infrastructure::InMemoryRepository;
-///
-/// // By definition, only `AggregateRoot`s have repositories.
-/// //
-/// // Common entities must be retrieved and persisted through their associated aggregate roots.
-/// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity, Clone)]
-/// struct MyEntity {
-///     #[entity(id)]
-///     id: u32,
-///     my_field: String,
-/// }
-///
-/// impl MyEntity {
-///     pub fn new(id: u32, my_field: impl ToString) -> Self {
-///         Self {
-///             id,
-///             my_field: my_field.to_string(),
-///         }
-///     }
-/// }
-///
-/// # tokio_test::block_on(async {
-/// let repository: InMemoryRepository<MyEntity> = InMemoryRepository::new();
-///
-/// // Add some entities to the repository.
-/// repository.add(MyEntity::new(1, "foo")).await.unwrap();
-/// repository.add(MyEntity::new(2, "bar")).await.unwrap();
-/// repository.add(MyEntity::new(3, "baz")).await.unwrap();
-///
-/// // Attempt to retrieve an entity by its ID.
-/// let my_entity_2 = repository.get_by_id(2).await.unwrap();
-///
-/// assert!(my_entity_2.is_some());
-/// assert_eq!(my_entity_2.as_ref().map(|e| e.my_field.as_str()), Some("bar"));
-///
-/// let mut my_entity_2 = my_entity_2.unwrap();
-///
-/// // Update the entity, then persist its changes.
-/// my_entity_2.my_field = "qux".to_string();
-///
-/// let my_entity_2 = repository.update(my_entity_2).await.unwrap();
-///
-/// assert_eq!(my_entity_2.my_field.as_str(), "qux");
-///
-/// // Delete the entity permanently.
-/// repository.delete(my_entity_2).await.unwrap();
-///
-/// // Assert it no longer exists.
-/// assert!(!repository.exists(2).await.unwrap());
-/// # })
-/// ```
+/// See the example on [Repository] for usage information of this repository implementation.
 pub struct InMemoryRepository<T: AggregateRoot> {
     entities: std::sync::RwLock<HashMap<<T as Entity>::Id, T>>,
 }
