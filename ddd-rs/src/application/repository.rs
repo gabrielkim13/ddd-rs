@@ -11,7 +11,7 @@ use super::DomainEventHandler;
 /// > the needed references to other objects of the domain. They will just get them from the
 /// > Repository and the model is regaining its clarity and focus.
 ///
-/// # Example
+/// # Examples
 ///
 /// This example uses the [InMemoryRepository](crate::infrastructure::memory::InMemoryRepository)
 /// which is a sample implementation of this trait.
@@ -144,7 +144,7 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
 /// Repository extension abstraction, for performing operations over aggregates that implement the
 /// [AggregateRootEx] trait.
 ///
-/// # Example
+/// # Examples
 ///
 /// Building upon the [Repository] sample, this example shows how a repository object can be
 /// extended in order to support concepts from the [AggregateRootEx] trait.
@@ -154,7 +154,6 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
 ///
 /// use ddd_rs::{
 ///     application::{DomainEventHandler, ReadRepository, Repository, RepositoryEx},
-///     domain::AggregateRootEx,
 ///     infrastructure::InMemoryRepository
 /// };
 ///
@@ -181,6 +180,7 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
 ///     #[entity(id)]
 ///     id: u32,
 ///     last_performed_action: Option<String>,
+///     #[aggregate_root(domain_events)]
 ///     domain_events: Vec<MyDomainEvent>,
 /// }
 ///
@@ -201,18 +201,6 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
 ///
 ///     pub fn confirm_async_action_performed(&mut self, action: impl ToString) {
 ///         self.last_performed_action.replace(action.to_string());
-///     }
-///
-///     fn register_domain_event(&mut self, domain_event: <Self as AggregateRootEx>::DomainEvent) {
-///         self.domain_events.push(domain_event);
-///     }
-/// }
-///
-/// impl AggregateRootEx for MyEntity {
-///     type DomainEvent = MyDomainEvent;
-///
-///     fn take_domain_events(&mut self) -> Vec<Self::DomainEvent> {
-///         self.domain_events.drain(..).collect()
 ///     }
 /// }
 ///

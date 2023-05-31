@@ -10,13 +10,15 @@ struct Entity {
     data: darling::ast::Data<darling::util::Ignored, EntityField>,
 }
 
+#[derive(darling::FromMeta)]
+struct IdMarker;
+
 #[derive(darling::FromField)]
 #[darling(attributes(entity))]
 struct EntityField {
     ident: Option<syn::Ident>,
     ty: syn::Type,
-    #[darling(default)]
-    id: bool,
+    id: Option<IdMarker>,
 }
 
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -34,17 +36,17 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let fields = data.take_struct().unwrap();
 
-    derive_struct(ident, generics, fields)
+    derive_entity(ident, generics, fields)
 }
 
-fn derive_struct(
+fn derive_entity(
     ident: syn::Ident,
     generics: syn::Generics,
     fields: darling::ast::Fields<EntityField>,
 ) -> TokenStream {
     let id_field = fields
         .into_iter()
-        .find(|f| f.id)
+        .find(|f| f.id.is_some())
         .expect("Missing `id` field");
 
     let id_ident = id_field.ident.unwrap();

@@ -10,12 +10,14 @@ struct ValueObject {
     data: darling::ast::Data<darling::util::Ignored, ValueObjectField>,
 }
 
+#[derive(darling::FromMeta)]
+struct EqMarker;
+
 #[derive(darling::FromField)]
 #[darling(attributes(value_object))]
 struct ValueObjectField {
     ident: Option<syn::Ident>,
-    #[darling(default)]
-    eq: bool,
+    eq: Option<EqMarker>,
 }
 
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -33,10 +35,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let fields = data.take_struct().unwrap();
 
-    derive_struct(ident, generics, fields)
+    derive_value_object(ident, generics, fields)
 }
 
-fn derive_struct(
+fn derive_value_object(
     ident: syn::Ident,
     generics: syn::Generics,
     fields: darling::ast::Fields<ValueObjectField>,
@@ -47,7 +49,7 @@ fn derive_struct(
         .collect::<Vec<_>>();
 
     let field = fields.iter().map(|(_, f)| f);
-    let eq_field = fields.iter().filter_map(|(eq, f)| eq.then_some(f));
+    let eq_field = fields.iter().filter_map(|(eq, f)| eq.as_ref().map(|_| f));
 
     quote! {
         impl #generics ddd_rs::domain::ValueObject for #ident #generics {}

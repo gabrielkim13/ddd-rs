@@ -11,7 +11,10 @@ mod value_object;
 use proc_macro::TokenStream;
 
 /// Proc macro for deriving the `AggregateRoot` trait.
-#[proc_macro_derive(AggregateRoot)]
+///
+/// Use the `#[aggregate_root(domain_events)]` attribute to tag the domain events field of the
+/// aggregate root, which is assumed to be a `Vec`.
+#[proc_macro_derive(AggregateRoot, attributes(aggregate_root))]
 pub fn derive_aggregate_root(input: TokenStream) -> TokenStream {
     aggregate_root::derive(input)
 }

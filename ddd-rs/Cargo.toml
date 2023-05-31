@@ -12,7 +12,7 @@ categories = ["rust-patterns"]
 [dependencies]
 async-trait = "0.1"
 chrono = "0.4"
-ddd-rs-derive = { version = "=1.0.0", optional = true, path = "../ddd-rs-derive" }
+ddd-rs-derive = { version = "=1.1.0", optional = true, path = "../ddd-rs-derive" }
 uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]

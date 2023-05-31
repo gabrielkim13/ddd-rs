@@ -4,7 +4,7 @@
 /// > interested in which object it is, but what attributes it has. An object that is used to
 /// > describe certain aspects of a domain, and which does not have identity, is named Value Object.
 ///
-/// # Examples
+/// # Exampless
 ///
 /// Derive its implementation using the [ddd_rs::ValueObject](crate::ValueObject) macro:
 ///

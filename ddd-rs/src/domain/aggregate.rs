@@ -8,7 +8,7 @@
 /// > references only to the root object. If there are other Entities inside the boundary, the
 /// > identity of those entities is local, making sense only inside the aggregate.
 ///
-/// # Example
+/// # Examples
 ///
 /// Derive its implementation using the [ddd_rs::AggregateRoot](crate::AggregateRoot) macro:
 ///
@@ -43,7 +43,10 @@ pub trait AggregateRoot: super::Entity + Send + Sync + 'static {}
 
 /// Extensions to the [AggregateRoot] behavior.
 ///
-/// # Example
+/// # Examples
+///
+/// Implement this trait explicitly when you need non-trivial use-cases, such as registering domain
+/// events on immutable instances of your entity:
 ///
 /// ```
 /// use std::sync::Mutex;
@@ -136,6 +139,60 @@ pub trait AggregateRoot: super::Entity + Send + Sync + 'static {}
 ///     domain_events[1],
 ///     MyDomainEvent::DidSomethingElse {
 ///         something_else: "bar".to_string()
+///     }
+/// );
+///
+/// assert!(aggregate_root.take_domain_events().is_empty());
+/// ```
+///
+/// Otherwise, derive its implementation using the [ddd_rs::AggregateRoot](crate::AggregateRoot)
+/// macro and the `#[aggregate_root(domain_events)]` attribute:
+///
+/// ```
+/// use ddd_rs::domain::AggregateRootEx;
+///
+/// #[derive(Debug, PartialEq)]
+/// enum MyDomainEvent {
+///     DidSomething { something: String },
+/// }
+///
+/// #[derive(ddd_rs::AggregateRoot, ddd_rs::Entity)]
+/// struct MyAggregateRoot {
+///     #[entity(id)]
+///     id: u32,
+///     #[aggregate_root(domain_events)]
+///     domain_events: Vec<MyDomainEvent>,
+/// }
+///
+/// impl MyAggregateRoot {
+///     pub fn new(id: u32) -> Self {
+///         Self {
+///             id,
+///             domain_events: Default::default(),
+///         }
+///     }
+///
+///     pub fn do_something(&mut self, something: impl ToString) {
+///         let something = something.to_string();
+///
+///         // Do something...
+///         
+///         // The `register_domain_event` method is automatically derived.
+///         self.register_domain_event(MyDomainEvent::DidSomething { something });
+///     }
+/// }
+///
+/// // This time around, the aggregate may only register domain events on mutable methods.
+/// let mut aggregate_root = MyAggregateRoot::new(42);
+///
+/// aggregate_root.do_something("foo");
+///
+/// let domain_events = aggregate_root.take_domain_events();
+///
+/// assert_eq!(
+///     domain_events[0],
+///     MyDomainEvent::DidSomething {
+///         something: "foo".to_string()
 ///     }
 /// );
 ///

@@ -28,7 +28,7 @@ pub use Request as Query;
 ///
 /// See [Request] for more information about [Commands](Command) and [Queries](Query).
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use std::sync::Mutex;
