@@ -5,7 +5,7 @@
 /// > matter, but a thread of continuity and identity, which spans the life of a system and can
 /// > extend beyond it. Such objects are called Entities.
 ///
-/// # Exampless
+/// # Examples
 ///
 /// Derive its implementation using the [ddd_rs::Entity](crate::Entity) macro:
 ///
