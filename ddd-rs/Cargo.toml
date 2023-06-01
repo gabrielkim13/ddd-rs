@@ -1,6 +1,6 @@
 [package]
 name = "ddd-rs"
-version = "1.1.1"
+version = "1.1.2"
 edition = "2021"
 authors = ["Gabriel Kim <gabrielkim13@gmail.com>"]
 license = "MIT"
@@ -11,12 +11,9 @@ categories = ["rust-patterns"]
 
 [dependencies]
 async-trait = "0.1"
-chrono = "0.4"
 ddd-rs-derive = { version = "=1.1.0", optional = true, path = "../ddd-rs-derive" }
-uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
-ddd-rs-derive = { path = "../ddd-rs-derive" }
 tokio-test = "0.4"
 
 [features]
