@@ -274,18 +274,6 @@ impl<T: AggregateRootEx> RepositoryEx<T> {
             repository,
         }
     }
-
-    async fn apply_domain_events(&self, mut entity: T) -> crate::Result<T> {
-        let domain_events = entity.take_domain_events();
-
-        let mut entity = entity;
-
-        for event in domain_events {
-            entity = self.domain_event_handler.handle(entity, event).await?;
-        }
-
-        Ok(entity)
-    }
 }
 
 #[async_trait::async_trait]
@@ -305,20 +293,38 @@ impl<T: AggregateRootEx> ReadRepository<T> for RepositoryEx<T> {
 
 #[async_trait::async_trait]
 impl<T: AggregateRootEx> Repository<T> for RepositoryEx<T> {
-    async fn add(&self, entity: T) -> crate::Result<T> {
-        let entity = self.repository.add(entity).await?;
+    async fn add(&self, mut entity: T) -> crate::Result<T> {
+        let domain_events = entity.take_domain_events();
 
-        self.apply_domain_events(entity).await
+        let mut entity = self.repository.add(entity).await?;
+
+        for event in domain_events {
+            entity = self.domain_event_handler.handle(entity, event).await?;
+        }
+
+        Ok(entity)
     }
 
-    async fn update(&self, entity: T) -> crate::Result<T> {
-        let entity = self.repository.update(entity).await?;
+    async fn update(&self, mut entity: T) -> crate::Result<T> {
+        let domain_events = entity.take_domain_events();
 
-        self.apply_domain_events(entity).await
+        let mut entity = self.repository.update(entity).await?;
+
+        for event in domain_events {
+            entity = self.domain_event_handler.handle(entity, event).await?;
+        }
+
+        Ok(entity)
     }
 
-    async fn delete(&self, entity: T) -> crate::Result<()> {
-        let entity = self.apply_domain_events(entity).await?;
+    async fn delete(&self, mut entity: T) -> crate::Result<()> {
+        let domain_events = entity.take_domain_events();
+
+        let mut entity = entity;
+
+        for event in domain_events {
+            entity = self.domain_event_handler.handle(entity, event).await?;
+        }
 
         self.repository.delete(entity).await
     }
