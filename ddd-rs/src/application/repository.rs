@@ -206,30 +206,39 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
 ///
 /// // The domain event handler will usually be a context that holds references to all necessary
 /// // services and providers to handle domain events.
-/// struct MyDomainEventHandler;
+/// struct MyDomainEventHandler {
+///     repository: Arc<dyn Repository<MyEntity>>,
+/// }
+///
+/// impl MyDomainEventHandler {
+///     pub fn new(repository: Arc<dyn Repository<MyEntity>>) -> Self {
+///         Self { repository }
+///     }
+/// }
 ///
 /// #[async_trait::async_trait]
 /// impl DomainEventHandler<MyEntity> for MyDomainEventHandler {
-///     async fn handle(&self, entity: &mut MyEntity, event: MyDomainEvent) -> ddd_rs::Result<()> {
+///     async fn handle(&self, mut entity: MyEntity, event: MyDomainEvent) -> ddd_rs::Result<MyEntity> {
 ///         let action = match event {
 ///             MyDomainEvent::AsyncActionRequested { action, .. } => action,
 ///         };
 ///
 ///         // Perform the async action...
-///         
+///
 ///         entity.confirm_async_action_performed(action);
 ///
-///         Ok(())
+///         self.repository.update(entity).await
 ///     }
 /// }
 ///
 /// # tokio_test::block_on(async {
+///
 /// // Extend the basic repository to enable processing of domain events registered by the
 /// // aggregate, upon persistence.
-/// let repository: RepositoryEx<MyEntity> = RepositoryEx::new(
-///     Arc::new(MyDomainEventHandler),
-///     Arc::new(InMemoryRepository::new()),
-/// );
+/// let repository = Arc::new(InMemoryRepository::new());
+/// let domain_event_handler = Arc::new(MyDomainEventHandler::new(repository.clone()));
+///
+/// let repository_ex = RepositoryEx::new(domain_event_handler, repository);
 ///
 /// // Create a new entity and request an async action.
 /// let mut entity = MyEntity::new(42);
@@ -241,7 +250,9 @@ pub trait ReadRepository<T: AggregateRoot>: Send + Sync {
 /// assert_eq!(entity.domain_events.len(), 1);
 ///
 /// // Persist the entity and assert that the action was performed as a result.
-/// let entity = repository.add(entity).await.unwrap();
+/// repository_ex.add(entity).await.unwrap();
+///
+/// let entity = repository_ex.get_by_id(42).await.unwrap().unwrap();
 ///
 /// assert_eq!(entity.last_performed_action.unwrap(), "foo");
 /// assert!(entity.domain_events.is_empty());
@@ -263,6 +274,18 @@ impl<T: AggregateRootEx> RepositoryEx<T> {
             repository,
         }
     }
+
+    async fn apply_domain_events(&self, mut entity: T) -> crate::Result<T> {
+        let domain_events = entity.take_domain_events();
+
+        let mut entity = entity;
+
+        for event in domain_events {
+            entity = self.domain_event_handler.handle(entity, event).await?;
+        }
+
+        Ok(entity)
+    }
 }
 
 #[async_trait::async_trait]
@@ -282,32 +305,20 @@ impl<T: AggregateRootEx> ReadRepository<T> for RepositoryEx<T> {
 
 #[async_trait::async_trait]
 impl<T: AggregateRootEx> Repository<T> for RepositoryEx<T> {
-    async fn add(&self, mut entity: T) -> crate::Result<T> {
-        let domain_events = entity.take_domain_events();
+    async fn add(&self, entity: T) -> crate::Result<T> {
+        let entity = self.repository.add(entity).await?;
 
-        for event in domain_events {
-            self.domain_event_handler.handle(&mut entity, event).await?;
-        }
-
-        self.repository.add(entity).await
+        self.apply_domain_events(entity).await
     }
 
-    async fn update(&self, mut entity: T) -> crate::Result<T> {
-        let domain_events = entity.take_domain_events();
+    async fn update(&self, entity: T) -> crate::Result<T> {
+        let entity = self.repository.update(entity).await?;
 
-        for event in domain_events {
-            self.domain_event_handler.handle(&mut entity, event).await?;
-        }
-
-        self.repository.update(entity).await
+        self.apply_domain_events(entity).await
     }
 
-    async fn delete(&self, mut entity: T) -> crate::Result<()> {
-        let domain_events = entity.take_domain_events();
-
-        for event in domain_events {
-            self.domain_event_handler.handle(&mut entity, event).await?;
-        }
+    async fn delete(&self, entity: T) -> crate::Result<()> {
+        let entity = self.apply_domain_events(entity).await?;
 
         self.repository.delete(entity).await
     }

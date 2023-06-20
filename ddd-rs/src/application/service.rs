@@ -162,5 +162,5 @@ pub use RequestHandler as QueryHandler;
 #[async_trait::async_trait]
 pub trait DomainEventHandler<T: AggregateRootEx>: Send + Sync {
     /// Handles the incoming domain event, applying any necessary changes to the entity.
-    async fn handle(&self, entity: &mut T, event: T::DomainEvent) -> crate::Result<()>;
+    async fn handle(&self, entity: T, event: T::DomainEvent) -> crate::Result<T>;
 }
